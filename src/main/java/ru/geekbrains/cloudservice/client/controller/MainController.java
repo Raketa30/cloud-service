@@ -1,124 +1,47 @@
 package ru.geekbrains.cloudservice.client.controller;
 
 import javafx.application.Platform;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.*;
-import ru.geekbrains.cloudservice.client.model.FileInfo;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.layout.VBox;
+import ru.geekbrains.cloudservice.client.api.ClientConnector;
 
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.format.DateTimeFormatter;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 
-public class MainController implements Initializable {
+public class MainController {
     @FXML
-    public ComboBox<String> discksBox;
-
+    public VBox leftPanel;
     @FXML
-    public TextField pathField;
+    public VBox rightPanel;
 
-    @FXML
-    ListView<FileInfo> foldersTable;
+    private ClientConnector clientConnector;
 
-    @FXML
-    TableView<FileInfo> filesTable;
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
-        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType().getName()));
-        fileTypeColumn.setPrefWidth(50);
-
-
-        TableColumn<FileInfo, String> fileNameColumn = new TableColumn<>("Name");
-        fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
-        fileTypeColumn.setPrefWidth(200);
-
-        TableColumn<FileInfo, Long> fileSizeColumn = new TableColumn<>("Size");
-        fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getFileSize()));
-        fileSizeColumn.setPrefWidth(50);
-        fileSizeColumn.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(Long item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (item == null || empty) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    String text = String.format("%,d bytes", item);
-                    if (item == -1L) {
-                        text = "[DIR]";
-                    }
-
-                    setText(text);
-                }
-            }
-        });
-
-        TableColumn<FileInfo, String> fileDateColumn = new TableColumn<>("Last Modified");
-        fileDateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
-        fileDateColumn.setPrefWidth(100);
-
-        filesTable.getColumns().addAll(fileNameColumn, fileTypeColumn, fileSizeColumn, fileDateColumn);
-        filesTable.getSortOrder().addAll(fileTypeColumn, fileNameColumn);
-
-        discksBox.getItems().clear();
-
-        for (Path p : FileSystems.getDefault().getRootDirectories()) {
-            discksBox.getItems().add(p.toString());
-        }
-
-        discksBox.getSelectionModel().select(0);
-
-        filesTable.setOnMouseClicked(mouseEvent -> {
-            if (mouseEvent.getClickCount() == 2) {
-                Path path = Paths.get(pathField.getText()).resolve(filesTable.getSelectionModel().getSelectedItem().getFilename());
-                updateList(path);
-            }
-        });
-
-        updateList(Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/src"));
-    }
-
-    public void updateList(Path path) {
-        try {
-            pathField.setText(path.normalize().toAbsolutePath().toString());
-            filesTable.getItems().clear();
-            filesTable.getItems().addAll(
-                    Files.list(path)
-                            .map(FileInfo::new)
-                            .collect(Collectors.toList())
-            );
-            filesTable.sort();
-        } catch (IOException e) {
-            new Alert(Alert.AlertType.WARNING, "Не удалось отобразить список файлов", ButtonType.OK);
-        }
-
-    }
-
-    public void btnPathUpAction(ActionEvent actionEvent) {
-        Path upPath = Paths.get(pathField.getText()).getParent();
-        if (upPath != null) {
-            updateList(upPath);
-        }
+    public MainController() {
+        this.clientConnector = new ClientConnector("localhost", 8989);
     }
 
     public void btnExitAction(ActionEvent actionEvent) {
         Platform.exit();
     }
 
-    public void selectFolderAction(ActionEvent actionEvent) {
-        ComboBox<String> element = (ComboBox<String>) actionEvent.getSource();
-        updateList((Paths.get(element.getSelectionModel().getSelectedItem())));
+    public void sendFileToServerAction(ActionEvent actionEvent) {
+        PanelController leftPC = (PanelController) leftPanel.getProperties().get("ctrl");
+        PanelController rightPC = (PanelController) rightPanel.getProperties().get("ctrl");
+
+        if (leftPC.getSelectedFilename() == null) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "ФАЙл не выбран", ButtonType.OK);
+            alert.showAndWait();
+            return;
+        }
+
+        Path path = leftPC.getCurrentPath();
+        clientConnector.send(path);
+    }
+
+    private void setPanelsLinks(PanelController leftPC, PanelController rightPC) {
+        leftPC.setPanelPath("/Users/duckpool/dev");
+        rightPC.setPanelPath("server_directory");
     }
 }

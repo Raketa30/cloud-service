@@ -11,8 +11,8 @@ public class MainCLient extends Application {
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
         primaryStage.setTitle("version 1.0");
-        primaryStage.setMinWidth(800);
-        primaryStage.setMinHeight(600);
+        primaryStage.setMinWidth(1024);
+        primaryStage.setMinHeight(768);
 
         primaryStage.setScene(new Scene(root, 300, 275));
         primaryStage.show();

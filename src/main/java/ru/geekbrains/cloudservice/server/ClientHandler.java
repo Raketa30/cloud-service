@@ -2,6 +2,7 @@ package ru.geekbrains.cloudservice.server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -21,8 +22,20 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
-        try{
+        try {
+            while (true) {
+                String filename = dis.readUTF();
+                long fileSize = dis.readLong();
+                try (FileOutputStream fos = new FileOutputStream(directory + "/" + filename)) {
+                    for (int i = 0; i < (fileSize + 1023) / 1024; i++) {
+                        int read = dis.read(buffer);
+                        fos.write(buffer, 0, read);
+                    }
 
+                    dos.writeUTF("file: " + filename + " received");
+                    dos.flush();
+                }
+            }
         } catch (Exception e) {
             System.out.println("Exception while read from ClintHandler");
         }

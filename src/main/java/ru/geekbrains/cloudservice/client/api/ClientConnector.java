@@ -17,7 +17,6 @@ public class ClientConnector {
         try (Socket socket = new Socket(address, port)) {
             this.dis = new DataInputStream(socket.getInputStream());
             this.dos = new DataOutputStream(socket.getOutputStream());
-
         } catch (IOException e) {
             e.printStackTrace();
         }

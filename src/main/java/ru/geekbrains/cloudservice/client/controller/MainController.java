@@ -24,14 +24,13 @@ public class MainController implements Initializable {
     public TextField pathField;
 
     @FXML
+    public Button btnUp;
+
+    @FXML
     ListView<FileInfo> foldersTable;
 
     @FXML
     TableView<FileInfo> filesTable;
-
-    public void btnExitAtion(ActionEvent actionEvent) {
-        Platform.exit();
-    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -99,5 +98,21 @@ public class MainController implements Initializable {
             Alert alert = new Alert(Alert.AlertType.WARNING, "Не удалось отобразить список файлов", ButtonType.OK);
         }
 
+    }
+
+    public void btnPathUpAction(ActionEvent actionEvent) {
+        Path upPath = Paths.get(pathField.getText()).getParent();
+        if(upPath != null) {
+            updateList(upPath);
+        }
+    }
+
+    public void btnExitAction(ActionEvent actionEvent) {
+        Platform.exit();
+    }
+
+    public void selectFolderAction(ActionEvent actionEvent) {
+        ComboBox<String> element = (ComboBox<String>)actionEvent.getSource();
+        updateList((Paths.get(element.getSelectionModel().getSelectedItem())));
     }
 }

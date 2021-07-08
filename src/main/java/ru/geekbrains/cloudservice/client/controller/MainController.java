@@ -4,29 +4,27 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import ru.geekbrains.cloudservice.client.model.FileInfo;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class MainController implements Initializable {
     @FXML
-    public ComboBox discksBox;
+    public ComboBox<String> discksBox;
 
     @FXML
     public TextField pathField;
-
-    @FXML
-    public Button btnUp;
 
     @FXML
     ListView<FileInfo> foldersTable;
@@ -76,7 +74,7 @@ public class MainController implements Initializable {
 
         discksBox.getItems().clear();
 
-        for(Path p : FileSystems.getDefault().getRootDirectories()) {
+        for (Path p : FileSystems.getDefault().getRootDirectories()) {
             discksBox.getItems().add(p.toString());
         }
 
@@ -103,14 +101,14 @@ public class MainController implements Initializable {
             );
             filesTable.sort();
         } catch (IOException e) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Не удалось отобразить список файлов", ButtonType.OK);
+            new Alert(Alert.AlertType.WARNING, "Не удалось отобразить список файлов", ButtonType.OK);
         }
 
     }
 
     public void btnPathUpAction(ActionEvent actionEvent) {
         Path upPath = Paths.get(pathField.getText()).getParent();
-        if(upPath != null) {
+        if (upPath != null) {
             updateList(upPath);
         }
     }
@@ -120,7 +118,7 @@ public class MainController implements Initializable {
     }
 
     public void selectFolderAction(ActionEvent actionEvent) {
-        ComboBox<String> element = (ComboBox<String>)actionEvent.getSource();
+        ComboBox<String> element = (ComboBox<String>) actionEvent.getSource();
         updateList((Paths.get(element.getSelectionModel().getSelectedItem())));
     }
 }

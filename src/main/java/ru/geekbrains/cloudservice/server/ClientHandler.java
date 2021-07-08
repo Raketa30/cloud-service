@@ -32,7 +32,7 @@ public class ClientHandler implements Runnable {
                         fos.write(buffer, 0, read);
                     }
 
-                    dos.writeUTF("file: " + filename + " received");
+//                    dos.writeUTF("file: " + filename + " received");
                     dos.flush();
                 }
             }

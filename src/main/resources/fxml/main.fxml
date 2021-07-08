@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.geekbrains.cloudservice.client.controller.MainController">
+   <center>
+      <TableView fx:id="filesTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+         </columnResizePolicy>
+      </TableView>
+   </center>
+   <left>
+      <ListView fx:id="foldersTable" prefHeight="373.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+   </left>
+   <top>
+      <VBox prefHeight="59.0" prefWidth="1024.0" BorderPane.alignment="CENTER">
+         <children>
+            <MenuBar>
+              <menus>
+                <Menu mnemonicParsing="false" text="File">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Close" onAction="#btnExitAtion"/>
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Delete" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <HBox prefHeight="40.0" prefWidth="1014.0">
+               <children>
+                  <ComboBox fx:id="discksBox" prefHeight="34.0" prefWidth="187.0">
+                     <HBox.margin>
+                        <Insets left="5.0" right="10.0" />
+                     </HBox.margin>
+                  </ComboBox>
+                  <TextField fx:id="pathField" HBox.hgrow="ALWAYS"  editable="false"/>
+                  <Button mnemonicParsing="false" prefHeight="20.0" prefWidth="131.0" text="Go">
+                     <HBox.margin>
+                        <Insets left="10.0" right="10.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </HBox>
+         </children>
+      </VBox>
+   </top>
+    <bottom>
+        <HBox spacing="5">
+            <Button text="Copy" HBox.hgrow="ALWAYS"/>
+            <Button text="Copy" HBox.hgrow="ALWAYS"/>
+            <Button text="Copy" HBox.hgrow="ALWAYS"/>
+            <Button text="Copy" HBox.hgrow="ALWAYS"/>
+            <Button text="Copy" HBox.hgrow="ALWAYS"/>
+        </HBox>
+    </bottom>
+</BorderPane>

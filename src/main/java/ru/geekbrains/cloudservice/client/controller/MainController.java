@@ -4,9 +4,11 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import ru.geekbrains.cloudservice.client.model.FileInfo;
 
 import java.io.IOException;
@@ -80,6 +82,12 @@ public class MainController implements Initializable {
 
         discksBox.getSelectionModel().select(0);
 
+        filesTable.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getClickCount() == 2) {
+                Path path = Paths.get(pathField.getText()).resolve(filesTable.getSelectionModel().getSelectedItem().getFilename());
+                updateList(path);
+            }
+        });
 
         updateList(Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/src"));
     }

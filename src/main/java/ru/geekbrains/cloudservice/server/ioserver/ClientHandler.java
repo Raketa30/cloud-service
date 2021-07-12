@@ -1,4 +1,4 @@
-package ru.geekbrains.cloudservice.server;
+package ru.geekbrains.cloudservice.server.ioserver;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

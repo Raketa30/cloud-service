@@ -3,10 +3,7 @@ package ru.geekbrains.cloudservice.server.nioserver;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -60,27 +57,7 @@ public class CloudNIOServer {
     }
 
     private void handleRead(SelectionKey key) throws IOException {
-        SocketChannel socketChannel = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-        System.out.println("Reading from " + socketChannel.getRemoteAddress());
-
-        while (true) {
-            int bytesRead = socketChannel.read(buffer);
-
-            if (bytesRead == -1) {
-                System.out.println("Connection closed " + socketChannel.getRemoteAddress());
-                socketChannel.close();
-            }
-
-            if (bytesRead == 0) {
-                break;
-            }
-
-            if (bytesRead > 0 && buffer.get(buffer.position() - 1) == '\n') {
-                socketChannel.register(selector, SelectionKey.OP_WRITE);
-            }
-        }
     }
 
     private void handleAccept() throws IOException {

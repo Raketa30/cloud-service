@@ -16,7 +16,6 @@ public class NIOClientConnector {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     public void transfer (FileChannel channel, long position, long size) throws IOException {

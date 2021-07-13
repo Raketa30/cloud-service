@@ -18,7 +18,7 @@ public class MainController {
     public VBox leftPanel;
     @FXML
     public VBox rightPanel;
-
+//    private ClientConnector clientConnector;
     private NIOClientConnector clientConnector;
 
     public MainController() {

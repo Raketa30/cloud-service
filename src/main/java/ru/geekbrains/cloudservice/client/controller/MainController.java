@@ -6,7 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.VBox;
-import ru.geekbrains.cloudservice.client.api.ClientConnector;
+import ru.geekbrains.cloudservice.client.api.io.ClientConnector;
 
 import java.nio.file.Path;
 

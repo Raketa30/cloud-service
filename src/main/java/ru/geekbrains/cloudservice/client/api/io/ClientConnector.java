@@ -1,4 +1,4 @@
-package ru.geekbrains.cloudservice.client.api;
+package ru.geekbrains.cloudservice.client.api.io;
 
 import ru.geekbrains.cloudservice.client.model.FileInfo;
 

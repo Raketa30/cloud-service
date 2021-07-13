@@ -1,17 +1,24 @@
 package ru.geekbrains.cloudservice.server.nioserver;
 
+import ru.geekbrains.cloudservice.server.api.FileWriter;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Set;
 
 public class CloudNIOServer {
     private ServerSocketChannel serverChannel;
     private Selector selector;
+    private String serverRootPath;
 
     public CloudNIOServer() {
+        this.serverRootPath = "server_directory";
+
         try {
             serverChannel = ServerSocketChannel.open();
             serverChannel.socket().bind(new InetSocketAddress(8989));
@@ -53,10 +60,12 @@ public class CloudNIOServer {
     }
 
     private void handleWrite(SelectionKey key) {
-
+        SocketChannel socketChannel = (SocketChannel) key.channel();
     }
 
     private void handleRead(SelectionKey key) throws IOException {
+        SocketChannel socketChannel = (SocketChannel) key.channel();
+        FileWriter fileWriter = new FileWriter(serverRootPath);
 
     }
 

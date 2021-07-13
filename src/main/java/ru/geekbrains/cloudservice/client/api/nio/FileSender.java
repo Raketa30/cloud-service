@@ -5,10 +5,10 @@ import java.net.InetSocketAddress;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
 
-public class NIOClientConnector {
+public class FileSender {
     private SocketChannel client;
 
-    public NIOClientConnector(String address, int port) throws IOException {
+    public FileSender(String address, int port) throws IOException {
         client = SocketChannel.open(new InetSocketAddress(port));
     }
 

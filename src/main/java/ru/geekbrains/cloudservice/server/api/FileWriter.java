@@ -1,5 +1,7 @@
 package ru.geekbrains.cloudservice.server.api;
 
+import ru.geekbrains.cloudservice.constants.Constants;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -17,7 +19,7 @@ public class FileWriter {
     public void transfer(SocketChannel socketChannel, long bytes) throws IOException {
         long position = 0L;
         while (position < bytes) {
-            position += this.channel.transferFrom(socketChannel, position, 1024L); //???
+            position += this.channel.transferFrom(socketChannel, position, Constants.MAX_TRANSFER_VALUE); //???
         }
     }
 

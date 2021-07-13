@@ -5,9 +5,10 @@ import ru.geekbrains.cloudservice.server.api.FileWriter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -21,8 +22,8 @@ public class CloudNIOServer {
 
         try {
             serverChannel = ServerSocketChannel.open();
-            serverChannel.socket().bind(new InetSocketAddress(8989));
-
+            serverChannel.socket().bind(new InetSocketAddress(8189));
+            serverChannel.configureBlocking(false);
             selector = Selector.open();
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
@@ -39,12 +40,8 @@ public class CloudNIOServer {
                         try {
                             if (key.isAcceptable()) {
                                 handleAccept();
-
                             } else if (key.isReadable()) {
                                 handleRead(key);
-
-                            } else if (key.isWritable()) {
-                                handleWrite(key);
                             }
                             iterator.remove();
                         } catch (IOException e) {
@@ -59,21 +56,22 @@ public class CloudNIOServer {
         }
     }
 
-    private void handleWrite(SelectionKey key) {
-        SocketChannel socketChannel = (SocketChannel) key.channel();
-    }
-
     private void handleRead(SelectionKey key) throws IOException {
         SocketChannel socketChannel = (SocketChannel) key.channel();
-        FileWriter fileWriter = new FileWriter(serverRootPath);
-
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        FileWriter fileWriter = new FileWriter(serverRootPath + "/" + "1.txt");
+        buffer.clear();
+        fileWriter.write(buffer, 0);
     }
 
     private void handleAccept() throws IOException {
         SocketChannel socketChannel = serverChannel.accept();
         socketChannel.configureBlocking(false);
-
         System.out.println("Connected " + socketChannel.getRemoteAddress());
         socketChannel.register(selector, SelectionKey.OP_READ);
+    }
+
+    public static void main(String[] args) {
+        new CloudNIOServer();
     }
 }

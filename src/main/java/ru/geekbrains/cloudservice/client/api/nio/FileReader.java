@@ -2,16 +2,16 @@ package ru.geekbrains.cloudservice.client.api.nio;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public class FileReader {
     private final FileChannel channel;
-    private final FileSender sender;
+    private final NIOClientConnector sender;
 
-    public FileReader(FileSender sender, String path) throws IOException {
+    public FileReader(NIOClientConnector sender, Path path) throws IOException {
         this.sender = sender;
-        this.channel = FileChannel.open(Paths.get(path), StandardOpenOption.READ);
+        this.channel = FileChannel.open(path, StandardOpenOption.READ);
     }
 
     public void read() throws IOException {

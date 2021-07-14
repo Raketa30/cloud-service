@@ -6,28 +6,15 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public class FileReader {
-    private final FileChannel channel;
-    private final NIOClientConnector sender;
+    private FileChannel fileChannel;
+    private NIOFileSender nioFileSender;
+    private Path path;
 
-    public FileReader(NIOClientConnector sender, Path path) throws IOException {
-        this.sender = sender;
-        this.channel = FileChannel.open(path, StandardOpenOption.READ);
+    public FileReader(NIOFileSender nioFileSender, Path path) throws IOException {
+        this.nioFileSender = nioFileSender;
+        this.path = path;
+        this.fileChannel = FileChannel.open(path, StandardOpenOption.READ);
     }
 
-    public void read() throws IOException {
-        try {
-            transfer();
-        } finally {
-            close();
-        }
-    }
 
-    private void transfer() throws IOException {
-        this.sender.transfer(this.channel, 0l, this.channel.size());
-    }
-
-    public void close() throws IOException {
-        this.channel.close();
-        this.sender.close();
-    }
 }

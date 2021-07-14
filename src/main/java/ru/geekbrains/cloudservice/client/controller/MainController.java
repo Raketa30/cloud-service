@@ -6,10 +6,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.VBox;
-import ru.geekbrains.cloudservice.client.api.io.ClientConnector;
-import ru.geekbrains.cloudservice.client.api.nio.FileReader;
-import ru.geekbrains.cloudservice.client.api.nio.NIOClientConnector;
+import ru.geekbrains.cloudservice.client.api.nio.NIOConnector;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -18,12 +17,11 @@ public class MainController {
     public VBox leftPanel;
     @FXML
     public VBox rightPanel;
-//    private ClientConnector clientConnector;
-    private NIOClientConnector clientConnector;
+
+    private NIOConnector clientConnector;
 
     public MainController() {
-//        this.clientConnector = new ClientConnector("localhost", 8989);
-       this.clientConnector = new NIOClientConnector(8189);
+
     }
 
     public void btnExitAction(ActionEvent actionEvent) {
@@ -41,13 +39,6 @@ public class MainController {
         }
 
         Path path = leftPC.getCurrentPath();
-        try {
-            FileReader reader = new FileReader(clientConnector, path);
-            reader.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-//        clientConnector.send(path);
     }
 
     private void setPanelsLinks(PanelController leftPC, PanelController rightPC) {

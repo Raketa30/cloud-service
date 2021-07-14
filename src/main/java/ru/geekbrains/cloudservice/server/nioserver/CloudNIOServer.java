@@ -16,6 +16,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 
 public class CloudNIOServer {
@@ -78,19 +79,14 @@ public class CloudNIOServer {
         }
 
         byte[] data = new byte[numRead];
-        FileInfo fileInfo = null;
         System.arraycopy(byteBuffer.array(), 0, data, 0, numRead);
-        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
-             ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);) {
-            fileInfo = (FileInfo) objectInputStream.readObject();
-            System.out.println(fileInfo);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        Optional<FileInfo> fileInfo = handleFileInfo(data);
 
-        if (fileInfo != null) {
-            FileWriter fileWriter = new FileWriter(serverRootPath + "/" + fileInfo.getFilename());
-            FileReceiver fileReceiver = new FileReceiver(socketChannel, fileWriter, fileInfo.getFileSize());
+
+        if (fileInfo.isPresent()) {
+            FileInfo presentFileInfo = fileInfo.get();
+            FileWriter fileWriter = new FileWriter(serverRootPath + "/" + presentFileInfo.getFilename());
+            FileReceiver fileReceiver = new FileReceiver(socketChannel, fileWriter, presentFileInfo.getFileSize());
             fileReceiver.receive();
         }
 
@@ -106,7 +102,21 @@ public class CloudNIOServer {
         channel.register(selector, SelectionKey.OP_READ);
     }
 
+    private Optional<FileInfo> handleFileInfo(byte[] data) {
+        Optional<FileInfo> optionalFileInfo = Optional.empty();
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
+             ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);) {
+            optionalFileInfo = Optional.of((FileInfo) objectInputStream.readObject());
+            System.out.println(optionalFileInfo.get());
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+        }
+        return optionalFileInfo;
+    }
+
     public static void main(String[] args) {
         new CloudNIOServer();
     }
+
+
 }

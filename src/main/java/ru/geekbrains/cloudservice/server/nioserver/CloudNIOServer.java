@@ -1,6 +1,8 @@
 package ru.geekbrains.cloudservice.server.nioserver;
 
 import ru.geekbrains.cloudservice.client.model.FileInfo;
+import ru.geekbrains.cloudservice.server.api.FileReceiver;
+import ru.geekbrains.cloudservice.server.api.FileWriter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -76,13 +78,20 @@ public class CloudNIOServer {
         }
 
         byte[] data = new byte[numRead];
+        FileInfo fileInfo = null;
         System.arraycopy(byteBuffer.array(), 0, data, 0, numRead);
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
              ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);) {
-            FileInfo fileInfo = (FileInfo) objectInputStream.readObject();
+            fileInfo = (FileInfo) objectInputStream.readObject();
             System.out.println(fileInfo);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        }
+
+        if (fileInfo != null) {
+            FileWriter fileWriter = new FileWriter(serverRootPath + "/" + fileInfo.getFilename());
+            FileReceiver fileReceiver = new FileReceiver(socketChannel, fileWriter, fileInfo.getFileSize());
+            fileReceiver.receive();
         }
 
     }

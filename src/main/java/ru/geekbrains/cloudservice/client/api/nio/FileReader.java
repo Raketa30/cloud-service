@@ -8,13 +8,22 @@ import java.nio.file.StandardOpenOption;
 public class FileReader {
     private FileChannel fileChannel;
     private NIOFileSender nioFileSender;
-    private Path path;
 
     public FileReader(NIOFileSender nioFileSender, Path path) throws IOException {
         this.nioFileSender = nioFileSender;
-        this.path = path;
         this.fileChannel = FileChannel.open(path, StandardOpenOption.READ);
     }
 
+    public void read() {
+        try {
+            transfer();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void transfer() throws IOException {
+        this.nioFileSender.transfer(this.fileChannel, 0L, this.fileChannel.size());
+    }
 
 }

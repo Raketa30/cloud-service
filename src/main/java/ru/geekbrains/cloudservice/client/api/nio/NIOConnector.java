@@ -9,13 +9,18 @@ import java.nio.channels.SocketChannel;
 public class NIOConnector extends Connector {
     private SocketChannel client;
 
-    public NIOConnector(int port){
-        super(port);
+    public NIOConnector(String address, int port){
+        super(address, port);
+        try {
+            connect(address, port);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void connect(String address, int port) throws IOException {
-        client = SocketChannel.open(new InetSocketAddress(port));
+        client = SocketChannel.open(new InetSocketAddress(address, port));
         setSender(new NIOFileSender(client));
     }
 

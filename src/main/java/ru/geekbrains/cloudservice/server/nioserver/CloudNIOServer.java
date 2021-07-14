@@ -1,9 +1,13 @@
 package ru.geekbrains.cloudservice.server.nioserver;
 
-import ru.geekbrains.cloudservice.server.api.FileWriter;
+import ru.geekbrains.cloudservice.client.model.FileInfo;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -22,7 +26,7 @@ public class CloudNIOServer {
 
         try {
             serverChannel = ServerSocketChannel.open();
-            serverChannel.socket().bind(new InetSocketAddress(8189));
+            serverChannel.socket().bind(new InetSocketAddress(8989));
             serverChannel.configureBlocking(false);
             selector = Selector.open();
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
@@ -39,15 +43,15 @@ public class CloudNIOServer {
                     if (key.isValid()) {
                         try {
                             if (key.isAcceptable()) {
-                                handleAccept();
+                                handleAccept(key);
                             } else if (key.isReadable()) {
                                 handleRead(key);
                             }
-                            iterator.remove();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
+                    iterator.remove();
                 }
             }
 
@@ -58,17 +62,39 @@ public class CloudNIOServer {
 
     private void handleRead(SelectionKey key) throws IOException {
         SocketChannel socketChannel = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        FileWriter fileWriter = new FileWriter(serverRootPath + "/" + "1.txt");
-        buffer.clear();
-        fileWriter.write(buffer, 0);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+        int numRead = -1;
+        numRead = socketChannel.read(byteBuffer);
+
+        if (numRead == -1) {
+            Socket socket = socketChannel.socket();
+            SocketAddress socketAddress = socket.getRemoteSocketAddress();
+            System.out.println("Connection closed " + socketAddress);
+            serverChannel.close();
+            key.cancel();
+            return;
+        }
+
+        byte[] data = new byte[numRead];
+        System.arraycopy(byteBuffer.array(), 0, data, 0, numRead);
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
+             ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);) {
+            FileInfo fileInfo = (FileInfo) objectInputStream.readObject();
+            System.out.println(fileInfo);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
     }
 
-    private void handleAccept() throws IOException {
-        SocketChannel socketChannel = serverChannel.accept();
-        socketChannel.configureBlocking(false);
-        System.out.println("Connected " + socketChannel.getRemoteAddress());
-        socketChannel.register(selector, SelectionKey.OP_READ);
+    private void handleAccept(SelectionKey key) throws IOException {
+        ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+        SocketChannel channel = serverSocketChannel.accept();
+        channel.configureBlocking(false);
+        Socket socket = channel.socket();
+        SocketAddress socketAddress = socket.getRemoteSocketAddress();
+        System.out.println("Connected to :" + socketAddress);
+        channel.register(selector, SelectionKey.OP_READ);
     }
 
     public static void main(String[] args) {

@@ -1,12 +1,13 @@
 package ru.geekbrains.cloudservice.client.model;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-public class FileInfo {
+public class FileInfo implements Serializable {
     private String filename;
     private FileType fileType;
     private Long fileSize;
@@ -77,5 +78,15 @@ public class FileInfo {
         public String getName() {
             return name;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "FileInfo{" +
+                "filename='" + filename + '\'' +
+                ", fileType=" + fileType +
+                ", fileSize=" + fileSize +
+                ", lastModified=" + lastModified +
+                '}';
     }
 }

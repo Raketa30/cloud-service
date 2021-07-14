@@ -1,5 +1,7 @@
 package ru.geekbrains.cloudservice.client.api;
 
+import java.nio.file.Path;
+
 public abstract class Connector implements ClientConnector {
     private String address;
     private int port;
@@ -10,31 +12,11 @@ public abstract class Connector implements ClientConnector {
         this.port = port;
     }
 
-    public Connector(int port) {
-        this.port = port;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public Sender getSender() {
-        return sender;
-    }
-
     public void setSender(Sender sender) {
         this.sender = sender;
+    }
+
+    public void send(Path path) {
+        sender.send(path);
     }
 }

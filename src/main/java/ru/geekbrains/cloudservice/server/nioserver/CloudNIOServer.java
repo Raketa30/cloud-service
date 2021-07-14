@@ -3,6 +3,7 @@ package ru.geekbrains.cloudservice.server.nioserver;
 import ru.geekbrains.cloudservice.client.model.FileInfo;
 import ru.geekbrains.cloudservice.server.api.FileReceiver;
 import ru.geekbrains.cloudservice.server.api.FileWriter;
+import ru.geekbrains.cloudservice.util.MyLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -59,6 +60,7 @@ public class CloudNIOServer {
             }
 
         } catch (IOException e) {
+            MyLogger.logError("NIO Server shutdown");
             e.printStackTrace();
         }
     }

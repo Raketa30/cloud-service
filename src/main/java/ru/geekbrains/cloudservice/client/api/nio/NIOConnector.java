@@ -1,6 +1,7 @@
 package ru.geekbrains.cloudservice.client.api.nio;
 
 import ru.geekbrains.cloudservice.client.api.Connector;
+import ru.geekbrains.cloudservice.util.MyLogger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -14,6 +15,7 @@ public class NIOConnector extends Connector {
         try {
             connect(address, port);
         } catch (IOException e) {
+            MyLogger.logError("Cannot connect to server");
             e.printStackTrace();
         }
     }

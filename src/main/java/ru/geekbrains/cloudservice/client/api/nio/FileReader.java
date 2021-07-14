@@ -1,5 +1,7 @@
 package ru.geekbrains.cloudservice.client.api.nio;
 
+import ru.geekbrains.cloudservice.util.MyLogger;
+
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
@@ -18,7 +20,7 @@ public class FileReader {
         try {
             transfer();
         } catch (IOException e) {
-            e.printStackTrace();
+            MyLogger.logError("Cannot transfer file");
         }
     }
 

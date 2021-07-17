@@ -9,8 +9,6 @@ import javafx.scene.layout.VBox;
 import ru.geekbrains.cloudservice.client.api.Connector;
 import ru.geekbrains.cloudservice.client.api.nio.NIOConnector;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.nio.file.Path;
 
 public class MainController {
@@ -26,7 +24,9 @@ public class MainController {
     }
 
     public void btnExitAction(ActionEvent actionEvent) {
+        clientConnector.disconnect();
         Platform.exit();
+
     }
 
     public void sendFileToServerAction(ActionEvent actionEvent) {

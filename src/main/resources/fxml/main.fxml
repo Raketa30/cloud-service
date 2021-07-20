@@ -21,8 +21,8 @@
    </top>
     <center>
         <HBox>
-            <fx:include source="panel.fxml" fx:id="leftPanel" HBox.hgrow="ALWAYS"/>
-            <fx:include source="panel.fxml" fx:id="rightPanel" HBox.hgrow="ALWAYS"/>
+            <fx:include source="client_panel.fxml" fx:id="leftPanel" HBox.hgrow="ALWAYS"/>
+            <fx:include source="server_panel.fxml" fx:id="rightPanel" HBox.hgrow="ALWAYS"/>
         </HBox>
     </center>
     <bottom>

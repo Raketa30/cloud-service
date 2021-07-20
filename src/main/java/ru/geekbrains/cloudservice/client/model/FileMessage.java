@@ -2,9 +2,10 @@ package ru.geekbrains.cloudservice.client.model;
 
 import lombok.Getter;
 import lombok.ToString;
+import ru.geekbrains.cloudservice.client.service.commands.AbstractCommand;
+import ru.geekbrains.cloudservice.client.service.commands.CommandType;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -12,21 +13,19 @@ import java.time.ZoneOffset;
 
 @Getter
 @ToString
-public class FileInfo implements Serializable {
+public class FileMessage extends AbstractCommand {
     private String filename;
+    private long fileSize;
     private FileType fileType;
-    private Long fileSize;
     private LocalDateTime lastModified;
-    private byte[] bytes;
 
-    public FileInfo(Path path) {
+    public FileMessage(Path path) {
         try {
             this.fileSize = Files.size(path);
             this.filename = path.getFileName().toString();
 
             if (Files.isRegularFile(path)) {
                 fileType = FileType.FILE;
-                bytes = Files.readAllBytes(path);
             } else {
                 fileType = FileType.DIRECTORY;
                 this.fileSize = -1L;
@@ -37,7 +36,11 @@ public class FileInfo implements Serializable {
         } catch (IOException e) {
             throw new RuntimeException("Unable to create file info from path");
         }
+    }
 
+    @Override
+    public CommandType getType() {
+        return CommandType.FILE_UPLOAD_REQUEST;
     }
 
     public enum FileType {

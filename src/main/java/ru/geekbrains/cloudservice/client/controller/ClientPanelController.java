@@ -17,8 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-public class PanelController implements Initializable {
-    private String panelPath;
+public class ClientPanelController implements Initializable {
 
     @FXML
     public TextField pathField;
@@ -72,7 +71,7 @@ public class PanelController implements Initializable {
             }
         });
 
-        updateList(Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service"));
+        updateList(Paths.get("~/"));
     }
 
     public void updateList(Path path) {
@@ -100,10 +99,6 @@ public class PanelController implements Initializable {
 
     public String getSelectedFilename() {
         return filesTable.getSelectionModel().getSelectedItem().getFilename();
-    }
-
-    public void setPanelPath(String panelPath) {
-        this.panelPath = panelPath;
     }
 
     public Path getCurrentPath() {

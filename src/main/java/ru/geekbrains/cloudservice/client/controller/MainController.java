@@ -5,20 +5,20 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.layout.VBox;
 import ru.geekbrains.cloudservice.client.api.NettyConnector;
 
 import java.nio.file.Path;
 
 public class MainController {
+    private final NettyConnector nettyConnector;
     @FXML
-    public ClientPanelController clientPanelController;
+    public VBox leftPanel;
     @FXML
-    public ServerPanelController serverPanelController;
-
-
+    public VBox rightPanel;
 
     public MainController() {
-        new NettyConnector("localhost", 8989);
+        nettyConnector =  new NettyConnector("localhost", 8989);
     }
 
     public void btnExitAction(ActionEvent actionEvent) {
@@ -26,6 +26,7 @@ public class MainController {
     }
 
     public void sendFileToServerAction(ActionEvent actionEvent) {
+        ClientPanelController clientPanelController = (ClientPanelController) leftPanel.getProperties().get("ctrl");
         if (clientPanelController.getSelectedFilename() == null) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "ФАЙл не выбран", ButtonType.OK);
             alert.showAndWait();
@@ -33,5 +34,8 @@ public class MainController {
         }
 
         Path path = clientPanelController.getCurrentPath();
+        nettyConnector.send(path);
     }
+
+
 }

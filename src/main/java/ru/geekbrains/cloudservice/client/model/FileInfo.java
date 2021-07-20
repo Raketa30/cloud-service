@@ -17,7 +17,6 @@ public class FileInfo implements Serializable {
     private FileType fileType;
     private Long fileSize;
     private LocalDateTime lastModified;
-    private byte[] bytes;
 
     public FileInfo(Path path) {
         try {
@@ -26,7 +25,6 @@ public class FileInfo implements Serializable {
 
             if (Files.isRegularFile(path)) {
                 fileType = FileType.FILE;
-                bytes = Files.readAllBytes(path);
             } else {
                 fileType = FileType.DIRECTORY;
                 this.fileSize = -1L;

@@ -7,8 +7,6 @@ import ru.geekbrains.cloudservice.client.service.commands.AbstractCommand;
 
 @Slf4j
 public class CommandsRequest extends SimpleChannelInboundHandler<AbstractCommand> {
-
-
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, AbstractCommand msg) throws Exception {
     }

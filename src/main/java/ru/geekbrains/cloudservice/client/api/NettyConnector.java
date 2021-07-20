@@ -12,44 +12,46 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.client.api.request.CommandsRequest;
+
+import java.nio.file.Path;
 
 @Slf4j
 public class NettyConnector {
-    private CommandsRequest commandsRequest;
 
     public NettyConnector(String host, int port) {
-        try {
-            init(host, port);
-        } catch (InterruptedException interruptedException) {
-            interruptedException.printStackTrace();
-        }
+        init(host, port);
     }
 
-    private void init(String host, int port) throws InterruptedException {
-        commandsRequest = new CommandsRequest();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
-        Bootstrap bootstrapClient = new Bootstrap();
-        bootstrapClient.group(workerGroup);
-        bootstrapClient.channel(NioSocketChannel.class);
-        bootstrapClient.option(ChannelOption.SO_KEEPALIVE, true);
-        bootstrapClient.handler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            protected void initChannel(SocketChannel ch) throws Exception {
-                ch.pipeline().addLast(
-                        new ObjectEncoder(),
-                        new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                        new ClientHandler(),
-                        commandsRequest
-                );
+    private void init(String host, int port){
+        new Thread(() -> {
+            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            Bootstrap bootstrapClient = new Bootstrap();
+            bootstrapClient.group(workerGroup);
+            bootstrapClient.channel(NioSocketChannel.class);
+            bootstrapClient.option(ChannelOption.SO_KEEPALIVE, true);
+            bootstrapClient.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(
+                            new ObjectEncoder(),
+                            new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                            new ClientHandler()
+                    );
+                }
+            });
+
+            try {
+                ChannelFuture channelFuture = bootstrapClient.connect(host, port).sync();
+                channelFuture.channel().closeFuture().sync();
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
             }
-        });
-        ChannelFuture channelFuture = bootstrapClient.connect(host, port).sync();
-        channelFuture.channel().closeFuture().sync();
-        workerGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }).start();
+
     }
 
-    public CommandsRequest getCommandsRequest() {
-        return commandsRequest;
+    public void send(Path path) {
+
     }
 }

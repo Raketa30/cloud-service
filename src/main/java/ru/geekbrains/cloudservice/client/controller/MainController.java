@@ -1,41 +1,61 @@
 package ru.geekbrains.cloudservice.client.controller;
 
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListView;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.layout.VBox;
-import ru.geekbrains.cloudservice.client.api.NettyConnector;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.shape.Circle;
+import ru.geekbrains.cloudservice.client.model.FileInfo;
 
-import java.nio.file.Path;
+import java.net.URL;
+import java.util.ResourceBundle;
 
 public class MainController {
-    private final NettyConnector nettyConnector;
+
     @FXML
-    public VBox leftPanel;
+    private ResourceBundle resources;
+
     @FXML
-    public VBox rightPanel;
+    private URL location;
 
-    public MainController() {
-        nettyConnector =  new NettyConnector("localhost", 8989);
+    @FXML
+    private Label freeSpace;
+
+    @FXML
+    private JFXButton folderUpColumn;
+
+    @FXML
+    private TableView<String> filesList;
+
+    @FXML
+    private TableColumn<FileInfo, String> fileNameColumn;
+
+    @FXML
+    private TableColumn<FileInfo, String> fileTypeColumn;
+
+    @FXML
+    private TableColumn<FileInfo, String> fileSizeColumn;
+
+    @FXML
+    private TableColumn<FileInfo, String> fileLastModifiedColumn;
+
+    @FXML
+    private TableColumn<FileInfo, ?> onAirColumn;
+
+    @FXML
+    private TableColumn<?, ?> uploadColumn;
+
+    @FXML
+    private Circle connectionStatusLamp;
+
+    @FXML
+    private JFXListView<?> rootFoldersList;
+
+    @FXML
+    void initialize() {
+
     }
-
-    public void btnExitAction(ActionEvent actionEvent) {
-        Platform.exit();
-    }
-
-    public void sendFileToServerAction(ActionEvent actionEvent) {
-        ClientPanelController clientPanelController = (ClientPanelController) leftPanel.getProperties().get("ctrl");
-        if (clientPanelController.getSelectedFilename() == null) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION, "ФАЙл не выбран", ButtonType.OK);
-            alert.showAndWait();
-            return;
-        }
-
-        Path path = clientPanelController.getCurrentPath();
-        nettyConnector.send(path);
-    }
-
-
 }
+

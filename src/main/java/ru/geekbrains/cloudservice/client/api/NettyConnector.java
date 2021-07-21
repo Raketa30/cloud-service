@@ -51,6 +51,10 @@ public class NettyConnector {
 
     }
 
+    public static void main(String[] args) {
+        new NettyConnector("localhost", 8989);
+    }
+
     public void send(Path path) {
 
     }

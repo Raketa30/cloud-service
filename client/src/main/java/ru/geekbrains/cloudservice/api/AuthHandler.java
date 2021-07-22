@@ -1,5 +1,6 @@
 package ru.geekbrains.cloudservice.api;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,7 @@ import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.service.AuthService;
 
 @Slf4j
+@ChannelHandler.Sharable
 public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
     private ChannelHandlerContext channelHandlerContext;
     private AuthService authService;
@@ -26,6 +28,7 @@ public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
 
     public void sendLoginRequest(String username, String password) {
         channelHandlerContext.writeAndFlush(new AuthRequest(username, password, AuthRequestType.LOGIN));
+        System.out.println("sended login request");
     }
 
     public void sendRegistrationRequest(String username, String password) {

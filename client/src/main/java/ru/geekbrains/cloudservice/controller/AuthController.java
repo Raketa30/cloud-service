@@ -16,9 +16,10 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class AuthController {
+
     private AuthService authService;
 
-    public AuthController(AuthService authService) {
+    public void setAuthService(AuthService authService) {
         this.authService = authService;
     }
 
@@ -54,11 +55,11 @@ public class AuthController {
     void initialize() {
         loginButton.setOnAction(actionEvent -> {
             String username = loginUserName.getText();
-            String password = loginUserName.getText();
+            String password = PasswordField.getText();
             authService.userLogin(username, password);
 
-            if(true) {
-                System.out.println(authService.isLogged());
+            if(authService.isLogged()) {
+                System.out.println();
                 loginButton.getScene().getWindow().hide();
                 FXMLLoader loader = new FXMLLoader();
                 loader.setLocation(getClass().getResource("/fxml/mainView.fxml"));

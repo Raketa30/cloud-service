@@ -19,16 +19,18 @@ import ru.geekbrains.cloudservice.util.MyLogger;
 public class NettyServer {
     private ServerAuthHandler serverAuthHandler;
     private int port;
+    private final MainConfig mainConfig;
 
     public NettyServer(int port) {
         this.port = port;
-        new MainConfig();
+        mainConfig = new MainConfig();
     }
 
     public void run() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         serverAuthHandler = new ServerAuthHandler();
+        serverAuthHandler.setAuthServerService(mainConfig.getAuthServerService());
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(bossGroup, workerGroup)

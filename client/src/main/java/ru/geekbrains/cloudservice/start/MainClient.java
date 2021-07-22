@@ -5,12 +5,20 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import ru.geekbrains.cloudservice.configuration.MainConfiguration;
+import ru.geekbrains.cloudservice.controller.AuthController;
 
 public class MainClient extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
-//        new MainConfiguration(8189, "localhost");
-        Parent root = FXMLLoader.load(getClass().getResource("/fxml/login.fxml"));
+        MainConfiguration mainConfiguration = new MainConfiguration(23232, "localhost");
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/loginPage.fxml"));
+
+        Parent root = loader.load();
+        AuthController controller = loader.<AuthController>getController();
+        controller.setAuthService(mainConfiguration.getAuthService());
+
         primaryStage.setTitle("version 1.0");
         primaryStage.setMinWidth(650);
         primaryStage.setMinHeight(400);

@@ -21,7 +21,6 @@ public class NettyConnector {
         init(host, port);
     }
     private void init(String host, int port){
-        new Thread(() -> {
             authHandler = new AuthHandler();
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             Bootstrap bootstrapClient = new Bootstrap();
@@ -46,8 +45,6 @@ public class NettyConnector {
                 interruptedException.printStackTrace();
             }
             workerGroup.shutdownGracefully();
-        }).start();
-
     }
 
     public AuthHandler getAuthHandler() {

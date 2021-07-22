@@ -22,4 +22,8 @@ public class MainConfig {
         dbConnection = new DBConnection();
         userRepo = new UserRepo(dbConnection);
     }
+
+    public AuthServerService getAuthServerService() {
+        return authServerService;
+    }
 }

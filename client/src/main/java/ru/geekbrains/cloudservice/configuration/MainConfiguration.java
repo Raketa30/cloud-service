@@ -18,8 +18,12 @@ public class MainConfiguration {
         nettyConnector = new NettyConnector(address, port);
     }
 
-    private void initServices() {
+    public void initServices() {
         authService.setAuthHandler(nettyConnector.getAuthHandler());
         nettyConnector.getAuthHandler().setAuthService(authService);
+    }
+
+    public AuthService getAuthService() {
+        return authService;
     }
 }

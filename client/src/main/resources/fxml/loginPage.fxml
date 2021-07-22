@@ -5,11 +5,10 @@
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
-<Pane xmlns:fx="http://javafx.com/fxml/1" prefHeight="400.0" prefWidth="650.0"
-      style="-fx-background-color: #819ca9;" xmlns="http://javafx.com/javafx/16"
-      fx:controller="ru.geekbrains.cloudservice.controller.AuthController">
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="400.0" prefWidth="650.0"
+            style="-fx-background-color: #819ca9;" xmlns="http://javafx.com/javafx/16"
+            fx:controller="ru.geekbrains.cloudservice.controller.AuthController">
     <children>
         <AnchorPane prefHeight="70.0" prefWidth="654.0" style="-fx-background-color: #29434e;">
             <children>
@@ -35,4 +34,4 @@
             </children>
         </AnchorPane>
     </children>
-</Pane>
+</AnchorPane>

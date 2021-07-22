@@ -36,11 +36,4 @@ public class User implements Serializable {
         this.username = username;
         this.password = password;
     }
-    //for Registration
-    public User(String username, String password, Boolean active, String serverRootPath) {
-        this.username = username;
-        this.password = password;
-        this.active = active;
-        this.serverRootPath = serverRootPath;
-    }
 }

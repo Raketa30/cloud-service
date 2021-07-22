@@ -3,6 +3,7 @@ package ru.geekbrains.cloudservice.controller;
 import com.jfoenix.controls.JFXButton;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import ru.geekbrains.cloudservice.service.AuthService;
@@ -51,6 +52,12 @@ public class AuthController {
             String username = loginUserName.getText();
             String password = loginUserName.getText();
             authService.userLogin(username, password);
+
+            if(authService.isLogged()) {
+                loginButton.getScene().getWindow().hide();
+                FXMLLoader loader = new FXMLLoader();
+                loader.setLocation(getClass().getResource("/fxml/mainView.fxml"));
+            }
         });
     }
 }

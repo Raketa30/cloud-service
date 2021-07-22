@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
+import ru.geekbrains.cloudservice.service.AuthService;
 
 import java.io.File;
 import java.net.URL;
@@ -12,6 +13,11 @@ import java.util.ResourceBundle;
 
 
 public class RegistrationController {
+    private AuthService authService;
+
+    public void setAuthService(AuthService authService) {
+        this.authService = authService;
+    }
 
     @FXML
     private ResourceBundle resources;
@@ -47,6 +53,15 @@ public class RegistrationController {
                 folderPath.setText(dir.getAbsolutePath());
             } else {
                 folderPath.setText(null);
+            }
+        });
+
+        confirmRegButton.setOnAction(action -> {
+            String username = userNameField.getText();
+            String password = passwordField.getText();
+            String passwordRepeat = passwordRepeatField.getText();
+            if (username != null && password != null && password.equals(passwordRepeat)) {
+                authService.registerUser(username, password);
             }
         });
     }

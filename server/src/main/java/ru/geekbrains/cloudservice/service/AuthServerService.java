@@ -17,7 +17,7 @@ public class AuthServerService {
     }
 
     public boolean findUserByUsername(String username) {
-        return userRepo.findUserByusername(username);
+        return userRepo.findUserByUsername(username);
     }
 
     public void registerNewUser(User user) {

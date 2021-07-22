@@ -18,7 +18,7 @@ public class UserRepo {
         return dbConnection.findUserByUsernameAndPassword(user);
     }
 
-    public boolean findUserByusername(String username) {
+    public boolean findUserByUsername(String username) {
         return dbConnection.findUserByUsername(username);
     }
 

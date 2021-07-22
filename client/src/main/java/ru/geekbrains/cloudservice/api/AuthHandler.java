@@ -14,6 +14,10 @@ public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
     private ChannelHandlerContext channelHandlerContext;
     private AuthService authService;
 
+    public void setAuthService(AuthService authService) {
+        this.authService = authService;
+    }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("Connected to server");

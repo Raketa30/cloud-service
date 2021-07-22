@@ -9,9 +9,12 @@ public class AuthService {
     private boolean logged;
     private UserTo userTo;
 
-    public AuthService(AuthHandler authHandler) {
-        this.authHandler = authHandler;
+    public AuthService() {
         this.logged = false;
+    }
+
+    public void setAuthHandler(AuthHandler authHandler) {
+        this.authHandler = authHandler;
     }
 
     public void userLogin(String username, String password) {

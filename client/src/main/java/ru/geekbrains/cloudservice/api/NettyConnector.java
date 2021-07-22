@@ -15,11 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class NettyConnector {
+    private AuthHandler authHandler;
+
     public NettyConnector(String host, int port) {
         init(host, port);
     }
     private void init(String host, int port){
         new Thread(() -> {
+            authHandler = new AuthHandler();
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             Bootstrap bootstrapClient = new Bootstrap();
             bootstrapClient.group(workerGroup);
@@ -31,7 +34,7 @@ public class NettyConnector {
                     ch.pipeline().addLast(
                             new ObjectEncoder(),
                             new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                            new AuthHandler()
+                            authHandler
                     );
                 }
             });
@@ -45,5 +48,9 @@ public class NettyConnector {
             workerGroup.shutdownGracefully();
         }).start();
 
+    }
+
+    public AuthHandler getAuthHandler() {
+        return authHandler;
     }
 }

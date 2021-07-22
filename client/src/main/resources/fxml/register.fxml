@@ -21,7 +21,7 @@
         </AnchorPane>
         <TextField fx:id="folderPath" layoutX="319.0" layoutY="252.0" prefHeight="30.0" prefWidth="253.0"
                    promptText="Choose root folder"/>
-        <JFXButton fx:id="folderChooserButton" layoutX="580.0" layoutY="252.0" prefHeight="30.0" prefWidth="56.0"
+        <JFXButton fx:id="folderChooserButton" onAction="#chooseFolder" layoutX="580.0" layoutY="252.0" prefHeight="30.0" prefWidth="56.0"
                    style="-fx-background-color: #4fb3bf;" text="Pick"/>
         <TextField fx:id="userNameField" layoutX="319.0" layoutY="105.0" prefHeight="30.0" prefWidth="317.0"
                    promptText="Username" style="-fx-border-style: 1px;">
@@ -33,7 +33,7 @@
                        promptText="Password"/>
         <PasswordField fx:id="passwordRepeatField" layoutX="319.0" layoutY="200.0" prefHeight="30.0" prefWidth="317.0"
                        promptText="Repeat password"/>
-        <JFXButton fx:id="confirmRegButton" layoutX="544.0" layoutY="341.0" style="-fx-background-color: #29434e;"
+        <JFXButton fx:id="confirmRegButton" onAction="#registerNewUSer" layoutX="544.0" layoutY="341.0" style="-fx-background-color: #29434e;"
                    text="Confirm" textFill="WHITE">
             <font>
                 <Font size="18.0"/>

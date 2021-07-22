@@ -21,12 +21,12 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("client connected");
+        log.info("client connected");
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("channel read complete");
+        log.info("channel read complete");
     }
 
     public void setAuthServerService(AuthServerService authServerService) {
@@ -49,14 +49,15 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>
 
             case REGISTRATION:
                 User user = request.getRequestBody();
-                if (authServerService.findUserByUsername(user.getUsername())) {
-                    authServerService.registerNewUser(user);
 
-                    if(authServerService.findUserByUsername(user.getUsername())) {
-                        authResponse = new AuthResponse(AuthResponseType.REGISTRATION_OK, user);
-                        ctx.writeAndFlush(authResponse);
-                        break;
-                    }
+                Optional<User> optionalUser1 = authServerService.findUserByUsername(user.getUsername());
+
+                if (optionalUser1.isEmpty()) {
+                    authServerService.registerNewUser(user);
+                    authResponse = new AuthResponse(AuthResponseType.REGISTRATION_OK, user);
+                    ctx.writeAndFlush(authResponse);
+                    log.info(user.toString());
+                    break;
                 }
 
                 ctx.writeAndFlush(new AuthResponse(AuthResponseType.REGISTRATION_WRONG_USER_EXIST));

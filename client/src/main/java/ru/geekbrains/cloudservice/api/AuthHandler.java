@@ -20,13 +20,13 @@ public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("Connected to server");
+        log.info("Connected to server");
         this.channelHandlerContext = ctx;
     }
 
     public void sendLoginRequest(String username, String password) {
         channelHandlerContext.writeAndFlush(new AuthRequest(username, password, AuthRequestType.LOGIN));
-        System.out.println("sended login request");
+        log.info("sended login request");
     }
 
     public void sendRegistrationRequest(String username, String password) {
@@ -38,6 +38,7 @@ public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
         switch (response.getResponseType()) {
             case LOGIN_OK:
                 authService.confirmLoginRequest(response.getResponseBody());
+                log.info("recieved {}", response.getResponseBody().toString());
                 break;
             case LOGIN_WRONG:
                 break;

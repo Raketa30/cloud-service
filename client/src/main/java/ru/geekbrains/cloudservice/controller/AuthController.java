@@ -58,21 +58,43 @@ public class AuthController {
 
         service.userLogin(username, password);
 
-        if (service.isLogged()) {
-            Parent root = loader.getRoot();
-            Stage stage = new Stage();
-            stage.setScene(new Scene(root));
-            stage.setTitle("u1");
-            stage.setMinWidth(900);
-            stage.setMinHeight(650);
-            stage.setResizable(false);
-            stage.showAndWait();
+        while (true) {
+            if (service.isLogged()) {
+                Parent root = loader.getRoot();
+                Stage stage = new Stage();
+                stage.setScene(new Scene(root));
+                stage.setTitle(service.getUserTo().getUsername());
+                stage.setMinWidth(900);
+                stage.setMinHeight(650);
+                stage.setResizable(false);
+                stage.showAndWait();
+                break;
+            }
         }
     }
 
     @FXML
     void signUp(ActionEvent event) {
+        loginButton.getScene().getWindow().hide();
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("/fxml/register.fxml"));
 
+        try {
+            loader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Parent root = loader.getRoot();
+        Stage stage = new Stage();
+        stage.setScene(new Scene(root));
+        stage.setMinWidth(650);
+        stage.setMinHeight(400);
+        stage.setResizable(false);
+
+        RegistrationController registrationController = loader.getController();
+        registrationController.setAuthService(service);
+
+        stage.showAndWait();
     }
 
     @FXML

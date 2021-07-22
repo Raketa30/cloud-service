@@ -17,10 +17,10 @@ import java.util.ResourceBundle;
 
 public class AuthController {
 
-    private AuthService authService;
+    private AuthService service;
 
-    public void setAuthService(AuthService authService) {
-        this.authService = authService;
+    public void setService(AuthService service) {
+        this.service = service;
     }
 
     @FXML
@@ -43,7 +43,31 @@ public class AuthController {
 
     @FXML
     void signIn(ActionEvent event) {
+        loginButton.getScene().getWindow().hide();
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("/fxml/mainView.fxml"));
 
+        try {
+            loader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        String username = loginUserName.getText();
+        String password = PasswordField.getText();
+
+        service.userLogin(username, password);
+
+        if (service.isLogged()) {
+            Parent root = loader.getRoot();
+            Stage stage = new Stage();
+            stage.setScene(new Scene(root));
+            stage.setTitle("u1");
+            stage.setMinWidth(900);
+            stage.setMinHeight(650);
+            stage.setResizable(false);
+            stage.showAndWait();
+        }
     }
 
     @FXML
@@ -53,32 +77,7 @@ public class AuthController {
 
     @FXML
     void initialize() {
-        loginButton.setOnAction(actionEvent -> {
-            String username = loginUserName.getText();
-            String password = PasswordField.getText();
-            authService.userLogin(username, password);
 
-            if(authService.isLogged()) {
-                System.out.println();
-                loginButton.getScene().getWindow().hide();
-                FXMLLoader loader = new FXMLLoader();
-                loader.setLocation(getClass().getResource("/fxml/mainView.fxml"));
-                try {
-                    loader.load();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                Parent root = loader.getRoot();
-                Stage stage = new Stage();
-                stage.setScene(new Scene(root));
-                stage.setTitle(authService.getUserTo().getUsername());
-                stage.setMinWidth(900);
-                stage.setMinHeight(650);
-                stage.setResizable(false);
-                stage.showAndWait();
-            }
-        });
     }
 }
 

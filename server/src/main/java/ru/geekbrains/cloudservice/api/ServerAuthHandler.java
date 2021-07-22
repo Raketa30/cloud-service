@@ -19,6 +19,16 @@ import java.util.Optional;
 public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>> {
     private AuthServerService authServerService;
 
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("client connected");
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("channel read complete");
+    }
+
     public void setAuthServerService(AuthServerService authServerService) {
         this.authServerService = authServerService;
     }

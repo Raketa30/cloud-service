@@ -12,16 +12,23 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
+import ru.geekbrains.cloudservice.service.AuthService;
 
 @Slf4j
 public class NettyConnector {
     private AuthHandler authHandler;
+    private AuthService authService;
 
     public NettyConnector(String host, int port) {
         init(host, port);
     }
-    private void init(String host, int port){
-            authHandler = new AuthHandler();
+
+    private void init(String host, int port) {
+        authService = new AuthService();
+        authHandler = new AuthHandler();
+        new Thread(() -> {
+            authService.setAuthHandler(authHandler);
+            authHandler.setAuthService(authService);
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             Bootstrap bootstrapClient = new Bootstrap();
             bootstrapClient.group(workerGroup);
@@ -45,9 +52,14 @@ public class NettyConnector {
                 interruptedException.printStackTrace();
             }
             workerGroup.shutdownGracefully();
+        }).start();
     }
 
     public AuthHandler getAuthHandler() {
         return authHandler;
+    }
+
+    public AuthService getAuthService() {
+        return authService;
     }
 }

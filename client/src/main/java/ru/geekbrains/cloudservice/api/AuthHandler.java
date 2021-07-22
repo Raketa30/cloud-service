@@ -1,6 +1,5 @@
 package ru.geekbrains.cloudservice.api;
 
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,6 @@ import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.service.AuthService;
 
 @Slf4j
-@ChannelHandler.Sharable
 public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
     private ChannelHandlerContext channelHandlerContext;
     private AuthService authService;

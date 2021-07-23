@@ -12,23 +12,24 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class NettyConnector {
-    private AuthHandler authHandler;
-    private AuthService authService;
 
-    public NettyConnector(String host, int port) {
-        init(host, port);
+    private AuthHandler authHandler;
+
+    @Autowired
+    public NettyConnector(AuthHandler authHandler) {
+        this.authHandler = authHandler;
+        init("localhost", 23232);
     }
 
-    private void init(String host, int port) {
-        authService = new AuthService();
-        authHandler = new AuthHandler();
+    public void init(String host, int port) {
+
         new Thread(() -> {
-            authService.setAuthHandler(authHandler);
-            authHandler.setAuthService(authService);
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             Bootstrap bootstrapClient = new Bootstrap();
             bootstrapClient.group(workerGroup);
@@ -40,7 +41,7 @@ public class NettyConnector {
                     ch.pipeline().addLast(
                             new ObjectEncoder(),
                             new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                            authHandler
+                           authHandler
                     );
                 }
             });
@@ -53,13 +54,5 @@ public class NettyConnector {
             }
             workerGroup.shutdownGracefully();
         }).start();
-    }
-
-    public AuthHandler getAuthHandler() {
-        return authHandler;
-    }
-
-    public AuthService getAuthService() {
-        return authService;
     }
 }

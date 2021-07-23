@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:id="mainDialog" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
             minWidth="-Infinity" prefHeight="650.0" prefWidth="900.0" style="-fx-background-color: #29434e;"
             xmlns="http://javafx.com/javafx/16" fx:controller="ru.geekbrains.cloudservice.controller.MainController">
     <top>

@@ -3,26 +3,38 @@ package ru.geekbrains.cloudservice.controller;
 import com.jfoenix.controls.JFXButton;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import net.rgielen.fxweaver.core.FxWeaver;
+import net.rgielen.fxweaver.core.FxmlView;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.service.AuthService;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-
+@Component
+@FxmlView("register.fxml")
 public class RegistrationController {
-    private AuthService authService;
+    private final AuthService authService;
 
-    public void setAuthService(AuthService authService) {
+    private FxWeaver fxWeaver;
+
+    @FXML
+    private AnchorPane mainDialog;
+
+    private Stage stage;
+
+    @Autowired
+    public RegistrationController(AuthService authService, FxWeaver fxWeaver) {
         this.authService = authService;
+        this.fxWeaver = fxWeaver;
     }
 
     @FXML
@@ -51,7 +63,11 @@ public class RegistrationController {
 
     @FXML
     public void initialize() {
-
+        this.stage = new Stage();
+        stage.setScene(new Scene(mainDialog));
+        stage.setMinWidth(650);
+        stage.setMinHeight(400);
+        stage.setResizable(false);
     }
 
     private void configureDirectoryChooser(DirectoryChooser directoryChooser) {
@@ -64,27 +80,11 @@ public class RegistrationController {
         String username = userNameField.getText();
         String password = passwordField.getText();
         String passwordRepeat = passwordRepeatField.getText();
-        if (username != null && password != null && password.equals(passwordRepeat)) {
+
+        if (validateCredentials(username, password, passwordRepeat)) {
             authService.registerUser(username, password);
         }
-
-        confirmRegButton.getScene().getWindow().hide();
-        FXMLLoader loader = new FXMLLoader();
-        loader.setLocation(getClass().getResource("/fxml/login.fxml"));
-
-        try {
-            loader.load();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Parent root = loader.getRoot();
-        Stage stage = new Stage();
-        stage.setScene(new Scene(root));
-        stage.setMinWidth(650);
-        stage.setMinHeight(400);
-        stage.setResizable(false);
-
-        stage.showAndWait();
+        fxWeaver.loadController(AuthController.class).show();
     }
 
     public void chooseFolder(ActionEvent actionEvent) {
@@ -97,6 +97,16 @@ public class RegistrationController {
         } else {
             folderPath.setText(null);
         }
+    }
+
+    private boolean validateCredentials(String username, String password, String passwordRepeat) {
+        return username != null && username.matches("[A-Za-z0-9]+")
+                && !password.equals("")
+                && password.equals(passwordRepeat);
+    }
+
+    public void show() {
+        stage.show();
     }
 }
 

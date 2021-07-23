@@ -10,7 +10,9 @@ import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
+import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.model.FileInfo;
@@ -21,6 +23,23 @@ import java.util.ResourceBundle;
 @Component
 @FxmlView("mainView.fxml")
 public class MainController {
+    private final FxWeaver fxWeaver;
+    private String userRootPath;
+
+    @Autowired
+    public MainController(FxWeaver fxWeaver) {
+        this.fxWeaver = fxWeaver;
+    }
+
+    public String getUserRootPath() {
+        return userRootPath;
+    }
+
+    public void setUserRootPath(String userRootPath) {
+        this.userRootPath = userRootPath;
+        stage.setTitle(userRootPath);
+    }
+
     @FXML
     public BorderPane mainDialog;
 
@@ -67,14 +86,18 @@ public class MainController {
 
     @FXML
     void initialize() {
-        this.stage = new Stage();
-        stage.setScene(new Scene(mainDialog));
 
     }
 
     public void show(UserTo userTo) {
-        stage.setTitle(userTo.getUsername());
+        this.stage = new Stage();
+        stage.setScene(new Scene(mainDialog));
+        stage.setTitle(userTo.getUsername() );
+        stage.setResizable(false);
         stage.show();
+        if(userRootPath == null) {
+            fxWeaver.loadController(ModalPickFolder.class).show();
+        }
     }
 }
 

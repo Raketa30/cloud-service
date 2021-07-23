@@ -23,11 +23,14 @@ public class AuthServerService {
         return userRepo.findUserByUsername(username);
     }
 
+
+//    регистрируем нового пользователя и устанавливает ему рутовую папку на сервере
+
     public void registerNewUser(User user) {
         user.setActive(true);
         user.setServerRootPath("folder" + user.getUsername());
         try {
-            Files.createDirectory(Paths.get("/" + user.getServerRootPath()));
+            Files.createDirectory(Paths.get("server/main_root_folder/" + user.getServerRootPath()));
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+@Slf4j
 @Component
 @FxmlView("register.fxml")
 public class RegistrationController {
@@ -83,8 +85,22 @@ public class RegistrationController {
 
         if (validateCredentials(username, password, passwordRepeat)) {
             authService.registerUser(username, password);
+            authService.setUserFolderPath(folderPath.getText());
+
+            while (authService.isRegistrationConfirm() || authService.isRegistrationDecline()) {
+                if (authService.isRegistrationConfirm()) {
+                    log.info("userpath setted{}", folderPath.getText());
+                    fxWeaver.loadController(AuthController.class).show();
+                    break;
+                }
+
+                if (authService.isRegistrationDecline()) {
+                    break;
+                }
+            }
+
         }
-        fxWeaver.loadController(AuthController.class).show();
+
     }
 
     public void chooseFolder(ActionEvent actionEvent) {
@@ -107,6 +123,10 @@ public class RegistrationController {
 
     public void show() {
         stage.show();
+    }
+
+    public void backToPreviosStage(ActionEvent actionEvent) {
+        fxWeaver.loadController(AuthController.class).show();
     }
 }
 

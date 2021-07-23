@@ -41,14 +41,25 @@ public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
     protected void channelRead0(ChannelHandlerContext ctx, Response<UserTo> response) throws Exception {
         switch (response.getResponseType()) {
             case LOGIN_OK:
+                /*
+                * Отправляем в сервис тело трансферобжекта
+                 * */
                 authService.confirmLoginRequest(response.getResponseBody());
                 log.info("recieved {}", response.getResponseBody().toString());
                 break;
+
             case LOGIN_WRONG:
+                authService.declineLoginRequest();
                 break;
+
             case REGISTRATION_OK:
+                authService.confirmRegistration(response.getResponseBody() );
+                String username = response.getResponseBody().getUsername();
+                log.info("Registered new user: {}", username);
                 break;
+
             case REGISTRATION_WRONG_USER_EXIST:
+                authService.declineRegistration();
                 break;
         }
     }

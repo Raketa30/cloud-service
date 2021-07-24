@@ -12,13 +12,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.Scanner;
 
 @Slf4j
 @Service
 public class AuthService {
     @Autowired
     private AuthHandler authHandler;
-
     private String userFolderPath;
     private UserTo userTo;
 
@@ -43,8 +44,9 @@ public class AuthService {
         //вывести главное окно с именем польователя
         this.loginConfirm = true;
         this.userTo = userFromRequest;
-        String userDirectory = getUserFolderPath() + "/GeekbrainsCloud-" + userTo.getUsername();
-        createLocalUserDirectory(userDirectory);
+        Optional<String> optionalPath = findUserFolderPath();
+        optionalPath.ifPresent(s -> this.userFolderPath = s);
+
         log.info("logged {}", loginConfirm);
     }
 
@@ -68,22 +70,6 @@ public class AuthService {
         registrationConfirm = true;
     }
 
-    public void createLocalUserDirectory(String userDirectory) {
-        if (Files.exists(Paths.get(userDirectory))) {
-            return;
-        }
-
-        try {
-            Files.createDirectory(Paths.get(userDirectory));
-            File file = new File("spring-client/settings.txt");
-            try (FileWriter fileWriter = new FileWriter(file, true)) {
-                fileWriter.write(userTo.getUsername() + " : " + userDirectory + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public void declineRegistration() {
         registrationDecline = true;
     }
@@ -97,7 +83,10 @@ public class AuthService {
     }
 
     public String getUserFolderPath() {
-        return userFolderPath;
+        if (this.userFolderPath == null) {
+
+        }
+        return this.userFolderPath;
     }
 
     public void setUserFolderPath(String userFolderPath) {
@@ -110,5 +99,42 @@ public class AuthService {
 
     public UserTo getUserTo() {
         return userTo;
+    }
+
+    //ищем папку пользователя в файле настроек
+    public Optional<String> findUserFolderPath() {
+        if (userTo == null) {
+            return Optional.empty();
+        }
+        try (Scanner scanner = new Scanner(new File("spring-client/settings.txt"))) {
+            while (scanner.hasNext()) {
+                String line = scanner.nextLine();
+                String[] credentials = line.split(" : ");
+
+                if (credentials[0].equals(userTo.getUsername())) {
+                    return Optional.of(credentials[1]);
+                }
+            }
+        } catch (IOException e) {
+            log.warn("File setting not found");
+        }
+        return Optional.empty();
+    }
+
+    //создаем папку пользователя при успешной регистрации
+    public void createLocalUserDirectory(String userDirectory) {
+        if (Files.exists(Paths.get(userDirectory + "/" + userTo.getUsername()))) {
+            return;
+        }
+
+        try {
+            Files.createDirectory(Paths.get(userDirectory + "/" + userTo.getUsername()));
+            File file = new File("spring-client/settings.txt");
+            try (FileWriter fileWriter = new FileWriter(file, true)) {
+                fileWriter.write(userTo.getUsername() + " : " + userDirectory + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

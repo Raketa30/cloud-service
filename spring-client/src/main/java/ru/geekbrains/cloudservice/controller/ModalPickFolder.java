@@ -62,7 +62,6 @@ public class ModalPickFolder {
         this.stage = new Stage();
         stage.setScene(new Scene(modalWindowFolderChooser));
         stage.initModality(Modality.WINDOW_MODAL);
-        stage.setAlwaysOnTop(true);
         stage.setMinWidth(600);
         stage.setMinHeight(177);
         stage.setResizable(false);
@@ -71,7 +70,7 @@ public class ModalPickFolder {
 
     public void confirmUserFolderPath(ActionEvent actionEvent) {
         fxWeaver.loadController(MainController.class).setUserRootPath(pathTextField.getText());
-        this.stage.hide();
 
+        this.stage.hide();
     }
 }

@@ -15,19 +15,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.service.AuthService;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.Scanner;
 
 @Slf4j
 @Component
 @FxmlView("loginPage.fxml")
 public class AuthController {
+
     private final FxWeaver fxWeaver;
     public AnchorPane mainDialog;
+
     private AuthService authService;
 
     private Stage stage;
@@ -64,40 +63,32 @@ public class AuthController {
 
         authService.userLogin(username, password);
 
-        while (true) {
+        while (!authService.isLoginConfirm()|| !authService.isLoginDecline()) {
             if (authService.isLoginConfirm()) {
-                Optional<String> userPath = findUserFolderPath(authService.getUserTo().getUsername());
+                Optional<String> userPath = authService.findUserFolderPath();
 
                 if(userPath.isPresent()) {
+                    //если у юзера есть своя папка на устройстве -> переходим в папку
                     fxWeaver.loadController(MainController.class).setUserRootPath(userPath.get());
                     fxWeaver.loadController(MainController.class).show(authService.getUserTo());
                     break;
                 } else {
+                    //если папки нет, предлагаем ему выбрать расположение папки на компьютере
                     fxWeaver.loadController(MainController.class).show(authService.getUserTo());
                     break;
                 }
 
+            }
+
+            if(authService.isLoginDecline()) {
+
+                //выводим лэйбл о том что неудачный вход
+                break;
             }
         }
     }
 
     //Читаем файл настроек и ищем папку юзера   юзер : папка
-    private Optional<String> findUserFolderPath(String username) {
-        try (Scanner scanner = new Scanner(new File("spring-client/settings.txt"))) {
-            while (scanner.hasNext()) {
-                String line = scanner.nextLine();
-                String[] credentials = line.split(" : ");
-
-                if (credentials[0].equals(username)) {
-                    return Optional.of(credentials[1]);
-                }
-            }
-        } catch (IOException e) {
-            log.warn("File setting not found");
-        }
-        return Optional.empty();
-
-    }
 
     @FXML
     void signUp(ActionEvent event) {

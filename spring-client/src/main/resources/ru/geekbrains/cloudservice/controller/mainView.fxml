@@ -39,7 +39,7 @@
                     <VBox.margin>
                         <Insets/>
                     </VBox.margin>
-                    <TextField alignment="TOP_CENTER" editable="false" prefHeight="27.0" prefWidth="678.0"
+                    <TextField fx:id="pathField" alignment="TOP_CENTER" editable="false" prefHeight="27.0" prefWidth="678.0"
                                HBox.hgrow="ALWAYS">
                         <font>
                             <Font size="9.0"/>

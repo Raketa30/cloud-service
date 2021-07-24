@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 
 @Getter
-public class AuthRequest implements Request<User>, Serializable {
+public class AuthRequest implements Request<User, AuthRequestType>, Serializable {
     private final String username;
     private final String password;
     private final AuthRequestType type;

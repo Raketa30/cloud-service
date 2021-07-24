@@ -6,6 +6,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.commands.Request;
 import ru.geekbrains.cloudservice.commands.Response;
+import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
 import ru.geekbrains.cloudservice.commands.auth.AuthResponse;
 import ru.geekbrains.cloudservice.commands.auth.AuthResponseType;
 import ru.geekbrains.cloudservice.dto.UserTo;
@@ -16,12 +17,11 @@ import java.util.Optional;
 
 @Slf4j
 @ChannelHandler.Sharable
-public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>> {
+public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User, AuthRequestType>> {
     private final AuthServerService authServerService;
 
-
-    public ServerAuthHandler() {
-        authServerService = new AuthServerService();
+    public ServerAuthHandler(AuthServerService authServerService) {
+        this.authServerService = authServerService;
     }
 
     @Override
@@ -34,25 +34,28 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>
         log.info("channel read complete");
     }
 
-
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Request<User> request) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, Request<User, AuthRequestType> request) throws Exception {
         log.debug("received {}", request.getType().name());
         Response<UserTo> authResponse;
 
         switch (request.getType()) {
+
             case LOGIN:
                 Optional<User> optionalUser = authServerService.loginRequest(request.getRequestBody());
                 if (optionalUser.isPresent()) {
-                    authResponse = new AuthResponse(AuthResponseType.LOGIN_OK, optionalUser.get());
-                    ctx.handler();
+                    User user = optionalUser.get();
+                    authResponse = new AuthResponse(AuthResponseType.LOGIN_OK, user);
+                    authServerService.addLoggedUser(ctx, user);
                     ctx.writeAndFlush(authResponse);
                 }
+
+                authResponse = new AuthResponse(AuthResponseType.LOGIN_WRONG);
+                ctx.writeAndFlush(authResponse);
                 break;
 
             case REGISTRATION:
                 User user = request.getRequestBody();
-
                 Optional<User> optionalUser1 = authServerService.findUserByUsername(user.getUsername());
 
                 if (optionalUser1.isEmpty()) {
@@ -65,6 +68,10 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>
 
                 ctx.writeAndFlush(new AuthResponse(AuthResponseType.REGISTRATION_WRONG_USER_EXIST));
                 break;
+
+            case LOGOUT:
+                authServerService.removeLoggedUser(ctx);
+                ctx.close();
         }
     }
 }

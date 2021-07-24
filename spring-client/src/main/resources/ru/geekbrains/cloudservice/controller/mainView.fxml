@@ -39,16 +39,16 @@
                     <VBox.margin>
                         <Insets/>
                     </VBox.margin>
-                    <TextField fx:id="pathField" alignment="TOP_CENTER" editable="false" prefHeight="27.0" prefWidth="678.0"
+                    <TextField fx:id="pathField" alignment="CENTER_LEFT" editable="false" prefHeight="27.0" prefWidth="678.0"
                                HBox.hgrow="ALWAYS">
                         <font>
-                            <Font size="9.0"/>
+                            <Font size="17"/>
                         </font>
                         <HBox.margin>
                             <Insets bottom="5.0"/>
                         </HBox.margin>
                     </TextField>
-                    <JFXButton fx:id="folderUpColumn" prefHeight="15.0" prefWidth="14.0"
+                    <JFXButton fx:id="folderUpButton" onAction="#btnPathUpAction" prefHeight="15.0" prefWidth="14.0"
                                style="-fx-background-color: #819ca9;" text="▲">
                         <HBox.margin>
                             <Insets bottom="5.0" left="5.0" right="5.0"/>

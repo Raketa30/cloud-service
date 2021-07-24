@@ -1,2 +1,2 @@
 
-u1 : /Users/duckpool/sd
+u1 : /Users/duckpool/sd/GeekbrainsCloud-u1

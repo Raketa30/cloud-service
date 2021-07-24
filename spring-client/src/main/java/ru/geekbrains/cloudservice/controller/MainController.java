@@ -16,7 +16,6 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.service.AuthService;
 import ru.geekbrains.cloudservice.service.FileService;
@@ -25,7 +24,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
@@ -34,7 +32,8 @@ import java.util.stream.Collectors;
 @FxmlView("mainView.fxml")
 public class MainController {
     private final FxWeaver fxWeaver;
-    private String userRootPath;
+
+    private Path currentPath;
 
     @FXML
     public TextField pathField;
@@ -42,15 +41,15 @@ public class MainController {
     private AuthService authService;
     private FileService fileService;
 
-    public String getUserRootPath() {
-        return userRootPath;
-    }
     @FXML
     private BorderPane mainDialog;
+
     @FXML
     private Stage stage;
+
     @FXML
     private TableView<FileInfo> filesList;
+
     @FXML
     private TableColumn<FileInfo, Long> fileSizeColumn;
 
@@ -64,7 +63,8 @@ public class MainController {
     private Label freeSpace;
 
     @FXML
-    private JFXButton folderUpColumn;
+    private JFXButton folderUpButton;
+
     @FXML
     private TableColumn<FileInfo, Circle> onAirColumn;
 
@@ -73,11 +73,13 @@ public class MainController {
 
     @FXML
     private TableColumn<FileInfo, String> fileTypeColumn;
+
     @FXML
     private TableColumn<FileInfo, JFXButton> uploadColumn;
 
     @FXML
     private TableColumn<FileInfo, String> fileLastModifiedColumn;
+
     @FXML
     private JFXListView<FileInfo> rootFoldersList;
 
@@ -91,36 +93,23 @@ public class MainController {
     @FXML
     private Circle connectionStatusLamp;
 
-    public void setUserRootPath(String userRootPath) {
-        this.userRootPath = userRootPath;
-        authService.createLocalUserDirectory(userRootPath);
-
-    }
-
     @FXML
     void initialize() {
         fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType().getName()));
-        fileTypeColumn.setPrefWidth(50);
-
         fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
-        fileTypeColumn.setPrefWidth(200);
-
         fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getFileSize()));
-        fileSizeColumn.setPrefWidth(50);
         fileSizeColumn.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(Long item, boolean empty) {
                 super.updateItem(item, empty);
-
                 if (item == null || empty) {
                     setText(null);
                     setStyle("");
                 } else {
                     String text = String.format("%,d bytes", item);
                     if (item == -1L) {
-                        text = "folder";
+                        text = "";
                     }
-
                     setText(text);
                 }
             }
@@ -132,18 +121,19 @@ public class MainController {
 
         filesList.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
-                Path path = getCurrentPath();
-                updateList(path);
+                getCurrentPath();
+                updateList(currentPath);
             }
         });
-
-        updateList(Paths.get(userRootPath));
+        currentPath = authService.getUserFolderPath();
+        updateList(currentPath);
     }
 
 
     public void updateList(Path path) {
+        Path relativizedPath = authService.getUserFolderPath().relativize(path);
         try {
-            pathField.setText(path.normalize().toAbsolutePath().toString());
+            pathField.setText("/" + relativizedPath.normalize().toString());
             filesList.getItems().clear();
             filesList.getItems().addAll(
                     Files.list(path)
@@ -157,21 +147,14 @@ public class MainController {
 
     }
 
-    public void show(UserTo userTo) {
-        this.stage = new Stage();
-        stage.setScene(new Scene(mainDialog));
-        stage.setTitle(userTo.getUsername());
-        stage.setResizable(false);
-        connectionStatusLamp.setFill(Color.GREEN);
-        stage.show();
-        if (userRootPath == null) {
-            fxWeaver.loadController(ModalPickFolder.class).show();
-        }
-    }
-
     public void btnPathUpAction(ActionEvent actionEvent) {
-        Path upPath = Paths.get(pathField.getText()).getParent();
+        if(currentPath.equals(authService.getUserFolderPath())) {
+            return;
+        }
+        Path upPath = currentPath.getParent();
+
         if (upPath != null) {
+            currentPath = upPath;
             updateList(upPath);
         }
     }
@@ -180,9 +163,17 @@ public class MainController {
         return filesList.getSelectionModel().getSelectedItem().getFilename();
     }
 
-    public Path getCurrentPath() {
-        return Paths.get(pathField.getText()).resolve(getSelectedFilename());
+    public void getCurrentPath() {
+        currentPath = currentPath.resolve(getSelectedFilename());
     }
 
+    public void show() {
+        this.stage = new Stage();
+        stage.setScene(new Scene(mainDialog));
+        stage.setTitle(authService.getUserTo().getUsername());
+        stage.setResizable(false);
+        connectionStatusLamp.setFill(Color.GREEN);
+        stage.show();
+    }
 }
 

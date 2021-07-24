@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.Scanner;
@@ -20,8 +21,12 @@ import java.util.Scanner;
 public class AuthService {
     @Autowired
     private AuthHandler authHandler;
+
     private String userFolderPath;
+
     private UserTo userTo;
+
+    //флаги хрень - потом переписать
 
     private volatile boolean loginConfirm;
     private volatile boolean loginDecline;
@@ -46,7 +51,6 @@ public class AuthService {
         this.userTo = userFromRequest;
         Optional<String> optionalPath = findUserFolderPath();
         optionalPath.ifPresent(s -> this.userFolderPath = s);
-
         log.info("logged {}", loginConfirm);
     }
 
@@ -82,11 +86,8 @@ public class AuthService {
         return registrationDecline;
     }
 
-    public String getUserFolderPath() {
-        if (this.userFolderPath == null) {
-
-        }
-        return this.userFolderPath;
+    public Path getUserFolderPath() {
+        return Paths.get(userFolderPath);
     }
 
     public void setUserFolderPath(String userFolderPath) {
@@ -123,18 +124,30 @@ public class AuthService {
 
     //создаем папку пользователя при успешной регистрации
     public void createLocalUserDirectory(String userDirectory) {
-        if (Files.exists(Paths.get(userDirectory + "/" + userTo.getUsername()))) {
+        String path = userDirectory + "/GeekbrainsCloud-" + userTo.getUsername();
+        if (Files.exists(Paths.get(path))) {
+            setUserFolderPath(userDirectory + "/" + userTo.getUsername());
             return;
         }
 
         try {
-            Files.createDirectory(Paths.get(userDirectory + "/" + userTo.getUsername()));
+            Files.createDirectory(Paths.get(path));
+            setUserFolderPath(path);
+
             File file = new File("spring-client/settings.txt");
             try (FileWriter fileWriter = new FileWriter(file, true)) {
-                fileWriter.write(userTo.getUsername() + " : " + userDirectory + "\n");
+                fileWriter.write(userTo.getUsername() + " : " + path + "\n");
             }
+
         } catch (IOException e) {
-            e.printStackTrace();
+            log.warn("Problems with write setting file: {} ", e.getMessage());
         }
+    }
+
+    public void resetFlags() {
+        this.loginConfirm = false;
+        this.loginDecline = false;
+        this.registrationConfirm = false;
+        this.registrationDecline = false;
     }
 }

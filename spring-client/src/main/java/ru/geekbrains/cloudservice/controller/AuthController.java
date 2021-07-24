@@ -25,6 +25,7 @@ import java.util.ResourceBundle;
 public class AuthController {
 
     private final FxWeaver fxWeaver;
+
     public AnchorPane mainDialog;
 
     private AuthService authService;
@@ -69,19 +70,16 @@ public class AuthController {
 
                 if(userPath.isPresent()) {
                     //если у юзера есть своя папка на устройстве -> переходим в папку
-                    fxWeaver.loadController(MainController.class).setUserRootPath(userPath.get());
-                    fxWeaver.loadController(MainController.class).show(authService.getUserTo());
+                    fxWeaver.loadController(MainController.class).show();
                     break;
                 } else {
                     //если папки нет, предлагаем ему выбрать расположение папки на компьютере
-                    fxWeaver.loadController(MainController.class).show(authService.getUserTo());
+                    fxWeaver.loadController(ModalPickFolder.class).show();
                     break;
                 }
-
             }
 
             if(authService.isLoginDecline()) {
-
                 //выводим лэйбл о том что неудачный вход
                 break;
             }
@@ -89,7 +87,6 @@ public class AuthController {
     }
 
     //Читаем файл настроек и ищем папку юзера   юзер : папка
-
     @FXML
     void signUp(ActionEvent event) {
         loginButton.getScene().getWindow().hide();

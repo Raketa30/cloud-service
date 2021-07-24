@@ -1,6 +1,7 @@
 package ru.geekbrains.cloudservice.model;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.io.IOException;
@@ -17,6 +18,8 @@ public class FileInfo implements Serializable {
     private FileType fileType;
     private Long fileSize;
     private LocalDateTime lastModified;
+    @Setter
+    private String uploadedStatus;
 
     public FileInfo(Path path) {
         try {
@@ -35,7 +38,7 @@ public class FileInfo implements Serializable {
         } catch (IOException e) {
             throw new RuntimeException("Unable to create file info from path");
         }
-
+        uploadedStatus = "not";
     }
 
     public enum FileType {

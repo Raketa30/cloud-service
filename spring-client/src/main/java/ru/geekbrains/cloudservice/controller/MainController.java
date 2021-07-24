@@ -12,6 +12,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +26,11 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @FxmlView("mainView.fxml")
 public class MainController {
@@ -66,7 +69,7 @@ public class MainController {
     private JFXButton folderUpButton;
 
     @FXML
-    private TableColumn<FileInfo, Circle> onAirColumn;
+    public TableColumn<FileInfo, String> downloadColumn;
 
     @FXML
     private TableColumn<FileInfo, String> fileNameColumn;
@@ -76,12 +79,13 @@ public class MainController {
 
     @FXML
     private TableColumn<FileInfo, JFXButton> uploadColumn;
+    @FXML
+    private TableColumn<FileInfo, String> onAirColumn;
 
     @FXML
     private TableColumn<FileInfo, String> fileLastModifiedColumn;
-
     @FXML
-    private JFXListView<FileInfo> rootFoldersList;
+    private JFXListView<String> rootFoldersList;
 
     @Autowired
     public MainController(FxWeaver fxWeaver, AuthService authService, FileService fileService) {
@@ -114,6 +118,42 @@ public class MainController {
                 }
             }
         });
+        //показываем статус загруженного файл
+        //https://stackoverflow.com/questions/42662807/javafx-tablecolumn-cell-change - спасибо ребятам
+        onAirColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
+        onAirColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isSafe(item, empty)) {
+                    CellData data = CellData.cellData(item);
+                    Circle circle = new Circle(6);
+                    circle.setFill(data.getColor());
+                    setGraphic(circle);
+                }
+            }
+
+            private boolean isSafe(String item, boolean empty) {
+                return !empty && Objects.nonNull(item);
+            }
+        });
+
+
+        try {
+            rootFoldersList.getItems().addAll(Files.list(authService.getUserFolderPath())
+                    .filter(path -> new FileInfo(path).getFileType() == FileInfo.FileType.DIRECTORY)
+                    .map(s -> new FileInfo(s).getFilename())
+                    .collect(Collectors.toList())
+            );
+
+        } catch (IOException e) {
+            log.warn("Нен удалось отобразить список папок в рутовом каталоге");
+        }
+        //gtht[jlbv d gfgrb bp henjdjuj rfnfkjuf
+        rootFoldersList.setOnMouseClicked(mouseEvent -> {
+            currentPath = authService.getUserFolderPath().resolve(getSelectedFolder());
+            updateList(currentPath);
+        });
 
         fileLastModifiedColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()
                 .getLastModified()
@@ -121,8 +161,10 @@ public class MainController {
 
         filesList.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
-                getCurrentPath();
-                updateList(currentPath);
+                Path filePath = getCurrentPath();
+                if (Files.isDirectory(filePath)) {
+                    updateList(filePath);
+                }
             }
         });
         currentPath = authService.getUserFolderPath();
@@ -148,7 +190,7 @@ public class MainController {
     }
 
     public void btnPathUpAction(ActionEvent actionEvent) {
-        if(currentPath.equals(authService.getUserFolderPath())) {
+        if (currentPath.equals(authService.getUserFolderPath())) {
             return;
         }
         Path upPath = currentPath.getParent();
@@ -163,8 +205,15 @@ public class MainController {
         return filesList.getSelectionModel().getSelectedItem().getFilename();
     }
 
-    public void getCurrentPath() {
-        currentPath = currentPath.resolve(getSelectedFilename());
+    public String getSelectedFolder() {
+        return rootFoldersList.getSelectionModel().getSelectedItem();
+    }
+
+    public Path getCurrentPath() {
+        if (Files.isDirectory(currentPath.resolve(getSelectedFilename()))) {
+            currentPath = currentPath.resolve(getSelectedFilename());
+        }
+        return currentPath;
     }
 
     public void show() {

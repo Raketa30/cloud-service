@@ -6,7 +6,7 @@ import ru.geekbrains.cloudservice.model.User;
 
 import java.io.Serializable;
 
-public class AuthResponse implements Response<UserTo>, Serializable {
+public class AuthResponse implements Response<UserTo, AuthResponseType>, Serializable {
     private final AuthResponseType authResponseType;
     private UserTo userTo;
 

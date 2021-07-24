@@ -60,10 +60,10 @@
                         <TableColumn fx:id="fileNameColumn" prefWidth="263.0" text="Name" />
                         <TableColumn fx:id="fileTypeColumn" minWidth="0.0" prefWidth="37.0" resizable="false" text="Type" />
                         <TableColumn fx:id="fileSizeColumn" prefWidth="157.0" text="Size" />
-                        <TableColumn fx:id="fileLastModifiedColumn" prefWidth="173.0" text="Last modified" />
-                        <TableColumn fx:id="onAirColumn"  prefWidth="34.0" resizable="false" text="Air" />
-                        <TableColumn fx:id="uploadColumn" prefWidth="35.0" resizable="false" text="U" />
-                  <TableColumn fx:id="downloadColumn" prefWidth="35.0" resizable="false" text="D" />
+                        <TableColumn fx:id="fileLastModifiedColumn" prefWidth="156.0" text="Last modified" />
+                        <TableColumn fx:id="onAirColumn" prefWidth="21.0" resizable="false" style="-fx-alignment: CENTER;" text="Air" />
+                        <TableColumn fx:id="uploadColumn" prefWidth="51.0" resizable="false" style="-fx-alignment: CENTER; -fx-color: #ffffff;" />
+                  <TableColumn fx:id="downloadColumn" prefWidth="49.0" resizable="false" style="-fx-alignment: CENTER; -fx-color: #ffffff;" />
                     </columns>
                 </TableView>
             </children>

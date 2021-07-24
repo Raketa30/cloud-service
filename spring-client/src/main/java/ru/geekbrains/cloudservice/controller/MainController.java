@@ -78,7 +78,7 @@ public class MainController {
     private TableColumn<FileInfo, String> fileTypeColumn;
 
     @FXML
-    private TableColumn<FileInfo, JFXButton> uploadColumn;
+    private TableColumn<FileInfo, String> uploadColumn;
     @FXML
     private TableColumn<FileInfo, String> onAirColumn;
 
@@ -137,7 +137,50 @@ public class MainController {
                 return !empty && Objects.nonNull(item);
             }
         });
+        //кнопки отправки файла/папки в строке
+        uploadColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
+        uploadColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isSafe(item, empty)) {
+                    if(item.equals("not") || item.equals("medium")) {
+                        JFXButton button = new JFXButton();
+                        button.setText("▲");
+                        button.setStyle("-fx-background-color: #0C0878; " +
+                                "-fx-border-color: aliceblue;  " +
+                                "-fx-text-fill: aliceblue");
+                        setGraphic(button);
+                    }
+                }
+            }
 
+            private boolean isSafe(String item, boolean empty) {
+                return !empty && Objects.nonNull(item);
+            }
+        });
+        //кнопки загрузки файла/папки в строке
+        downloadColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
+        downloadColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isSafe(item, empty)) {
+                    if(item.equals("yes")) {
+                        JFXButton button = new JFXButton();
+                        button.setText("▼");
+                        button.setStyle("-fx-background-color: green; " +
+                                "-fx-border-color: aliceblue; " +
+                                "-fx-text-fill: aliceblue");
+                        setGraphic(button);
+                    }
+                }
+            }
+
+            private boolean isSafe(String item, boolean empty) {
+                return !empty && Objects.nonNull(item);
+            }
+        });
 
         try {
             rootFoldersList.getItems().addAll(Files.list(authService.getUserFolderPath())

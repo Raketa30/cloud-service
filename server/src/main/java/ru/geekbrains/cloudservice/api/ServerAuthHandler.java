@@ -17,7 +17,12 @@ import java.util.Optional;
 @Slf4j
 @ChannelHandler.Sharable
 public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>> {
-    private AuthServerService authServerService;
+    private final AuthServerService authServerService;
+
+
+    public ServerAuthHandler() {
+        authServerService = new AuthServerService();
+    }
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -29,9 +34,6 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>
         log.info("channel read complete");
     }
 
-    public void setAuthServerService(AuthServerService authServerService) {
-        this.authServerService = authServerService;
-    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Request<User> request) throws Exception {
@@ -43,6 +45,7 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User>
                 Optional<User> optionalUser = authServerService.loginRequest(request.getRequestBody());
                 if (optionalUser.isPresent()) {
                     authResponse = new AuthResponse(AuthResponseType.LOGIN_OK, optionalUser.get());
+                    ctx.handler();
                     ctx.writeAndFlush(authResponse);
                 }
                 break;

@@ -6,13 +6,18 @@ import ru.geekbrains.cloudservice.repo.UserRepo;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class AuthServerService {
+    //Лист для залогиненых юзеров
+    private final List<User> loggedUsers;
     private UserRepo userRepo;
 
-    public AuthServerService(UserRepo userRepo) {
-        this.userRepo = userRepo;
+    public AuthServerService() {
+        this.userRepo = new UserRepo();
+        loggedUsers = new ArrayList<>();
     }
 
     public Optional<User> loginRequest(User user) {
@@ -35,5 +40,9 @@ public class AuthServerService {
             e.printStackTrace();
         }
         userRepo.registerNewUser(user);
+    }
+
+    public List<User> getLoggedUsers() {
+        return loggedUsers;
     }
 }

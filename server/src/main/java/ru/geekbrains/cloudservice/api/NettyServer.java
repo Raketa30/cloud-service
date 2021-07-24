@@ -12,25 +12,20 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.config.MainConfig;
 import ru.geekbrains.cloudservice.util.MyLogger;
 
 @Slf4j
 public class NettyServer {
-    private ServerAuthHandler serverAuthHandler;
     private int port;
-    private final MainConfig mainConfig;
 
     public NettyServer(int port) {
         this.port = port;
-        mainConfig = new MainConfig();
     }
 
     public void run() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        serverAuthHandler = new ServerAuthHandler();
-        serverAuthHandler.setAuthServerService(mainConfig.getAuthServerService());
+        ServerAuthHandler serverAuthHandler = new ServerAuthHandler();
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(bossGroup, workerGroup)

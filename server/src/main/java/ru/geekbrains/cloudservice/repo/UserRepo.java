@@ -9,8 +9,8 @@ import java.util.Optional;
 public class UserRepo {
     private DBConnection dbConnection;
 
-    public UserRepo(DBConnection dbConnection) {
-        this.dbConnection = dbConnection;
+    public UserRepo() {
+        this.dbConnection = new DBConnection();
     }
 
     public Optional<User> findUserByLoginAndPassword(String username, String password) {

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" fx:id="mainDialog" prefHeight="400.0" prefWidth="650.0" style="-fx-background-color: #00838f;" xmlns="http://javafx.com/javafx/16" fx:controller="ru.geekbrains.cloudservice.controller.RegistrationController">
+    <children>
+        <AnchorPane prefHeight="80.0" prefWidth="650.0" style="-fx-background-color: #005662;">
+            <children>
+                <Label layoutX="14.0" layoutY="21.0" prefHeight="38.0" prefWidth="290.0" text="GeekBrains MyCloud" textFill="WHITE">
+                    <font>
+                        <Font name="Arial" size="30.0" />
+                    </font>
+                </Label>
+            </children>
+        </AnchorPane>
+        <TextField fx:id="folderPath" layoutX="319.0" layoutY="252.0" prefHeight="30.0" prefWidth="253.0" promptText="Choose root folder" />
+        <JFXButton fx:id="folderChooserButton" layoutX="580.0" layoutY="252.0" onAction="#chooseFolder" prefHeight="30.0" prefWidth="56.0" style="-fx-background-color: #4fb3bf;" text="Pick" />
+        <TextField fx:id="userNameField" layoutX="319.0" layoutY="105.0" prefHeight="30.0" prefWidth="317.0" promptText="Username" style="-fx-border-style: 1px;">
+            <opaqueInsets>
+                <Insets />
+            </opaqueInsets>
+        </TextField>
+        <PasswordField fx:id="passwordField" layoutX="319.0" layoutY="151.0" prefHeight="30.0" prefWidth="317.0" promptText="Password" />
+        <PasswordField fx:id="passwordRepeatField" layoutX="319.0" layoutY="200.0" prefHeight="30.0" prefWidth="317.0" promptText="Repeat password" />
+        <JFXButton fx:id="confirmRegButton" layoutX="544.0" layoutY="341.0" onAction="#registerNewUSer" style="-fx-background-color: #29434e;" text="Confirm" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+      <JFXButton layoutX="14.0" layoutY="341.0" onAction="#backToPreviosStage" style="-fx-background-color: #004c40;" text="Back" textFill="#fffefe">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </JFXButton>
+    </children>
+</AnchorPane>

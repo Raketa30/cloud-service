@@ -5,18 +5,14 @@ import ru.geekbrains.cloudservice.commands.Constants;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public class FileWriter {
     private final FileChannel fileChannel;
 
-    public FileWriter(String path) throws IOException {
-        if (path.isEmpty()) {
-            throw new IllegalArgumentException("path required");
-        }
-
-        this.fileChannel = FileChannel.open(Paths.get(path), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+    public FileWriter(Path path) throws IOException {
+        this.fileChannel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
     }
 
     public void transfer(SocketChannel socketChannel, long bytes) throws IOException {

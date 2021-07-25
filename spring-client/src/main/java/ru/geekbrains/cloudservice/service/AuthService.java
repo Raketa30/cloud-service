@@ -27,7 +27,6 @@ public class AuthService {
     private UserTo userTo;
 
     //флаги хрень - потом переписать
-
     private volatile boolean loginConfirm;
     private volatile boolean loginDecline;
     private volatile boolean registrationConfirm;

@@ -40,7 +40,6 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User,
         Response<UserTo, AuthResponseType> authResponse;
 
         switch (request.getType()) {
-
             case LOGIN:
                 Optional<User> optionalUser = authServerService.loginRequest(request.getRequestBody());
                 if (optionalUser.isPresent()) {
@@ -48,6 +47,7 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User,
                     authResponse = new AuthResponse(AuthResponseType.LOGIN_OK, user);
                     authServerService.addLoggedUser(ctx, user);
                     ctx.writeAndFlush(authResponse);
+                    break;
                 }
 
                 authResponse = new AuthResponse(AuthResponseType.LOGIN_WRONG);

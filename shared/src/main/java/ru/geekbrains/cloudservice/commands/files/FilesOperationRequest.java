@@ -3,7 +3,9 @@ package ru.geekbrains.cloudservice.commands.files;
 import ru.geekbrains.cloudservice.commands.Request;
 import ru.geekbrains.cloudservice.model.FileInfo;
 
-public class FilesOperationRequest implements Request<FileInfo, FileOperationRequestType> {
+import java.io.Serializable;
+
+public class FilesOperationRequest implements Request<FileInfo, FileOperationRequestType>, Serializable {
     private final FileOperationRequestType requestType;
     private final FileInfo fileInfo;
 

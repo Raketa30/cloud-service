@@ -5,25 +5,44 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.commands.Response;
+import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
+import ru.geekbrains.cloudservice.commands.files.FilesOperationRequest;
 import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
+import ru.geekbrains.cloudservice.commands.transmitter.FileReader;
+import ru.geekbrains.cloudservice.commands.transmitter.FileSender;
 import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.service.FileService;
 
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
+
 @Slf4j
-@Component
+@Service
 @ChannelHandler.Sharable
 public class FileHandler extends SimpleChannelInboundHandler<Response<FileInfo, FilesOperationResponseType>> {
-    private ChannelHandlerContext channelHandlerContext;
-
     @Autowired
     private FileService fileService;
 
+    private ChannelHandlerContext channelHandlerContext;
+
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        log.info("received ctx for file transfer");
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         this.channelHandlerContext = ctx;
+    }
+
+    public void sendFileOperationRequest(FilesOperationRequest request) {
+        channelHandlerContext.writeAndFlush(request);
+    }
+
+    public FilesOperationRequest sendFileToServer(FileInfo responseBody) throws IOException {
+        SocketChannel socketChannel = (SocketChannel)channelHandlerContext;
+        FileSender fileSender = new FileSender(socketChannel);
+        FileReader fileReader = new FileReader(fileSender, responseBody.getPath());
+        fileReader.read();
+        return new FilesOperationRequest(FileOperationRequestType.SAVE_FILE, responseBody);
+
     }
 
     @Override
@@ -31,9 +50,10 @@ public class FileHandler extends SimpleChannelInboundHandler<Response<FileInfo, 
         switch (response.getResponseType()) {
             case FILE_READY_TO_SAVE:
                 FileInfo responseBody = response.getResponseBody();
-                fileService.sendFileToServer(responseBody);
+                sendFileToServer(responseBody);
                 break;
             case FILE_ALREADY_EXIST:
+
                 break;
             case FILE_SAVED:
                 break;
@@ -48,11 +68,5 @@ public class FileHandler extends SimpleChannelInboundHandler<Response<FileInfo, 
             case DIRECTORY_NOT_EXIST:
                 break;
         }
-    }
-
-
-
-    public ChannelHandlerContext getChannelHandlerContext() {
-        return channelHandlerContext;
     }
 }

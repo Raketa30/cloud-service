@@ -79,6 +79,7 @@ public class MainController {
 
     @FXML
     private TableColumn<FileInfo, String> uploadColumn;
+
     @FXML
     private TableColumn<FileInfo, String> onAirColumn;
 
@@ -144,7 +145,7 @@ public class MainController {
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (isSafe(item, empty)) {
-                    if(item.equals("not") || item.equals("medium")) {
+                    if (item.equals("not") || item.equals("medium")) {
                         JFXButton button = new JFXButton();
                         button.setText("▲");
                         button.setStyle("-fx-background-color: #0C0878; " +
@@ -154,6 +155,7 @@ public class MainController {
 
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            fileInfo.setRelativePath(authService.getUserFolderPath().relativize(fileInfo.getPath()));
                             fileService.sendRequestForFileSaving(fileInfo);
                         });
                     }
@@ -171,7 +173,7 @@ public class MainController {
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (isSafe(item, empty)) {
-                    if(item.equals("yes")) {
+                    if (item.equals("yes")) {
                         JFXButton button = new JFXButton();
                         button.setText("▼");
                         button.setStyle("-fx-background-color: green; " +

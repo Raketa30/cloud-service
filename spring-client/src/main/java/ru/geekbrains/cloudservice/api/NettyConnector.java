@@ -12,13 +12,20 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class NettyConnector {
-    public NettyConnector() {
+    private final AuthHandler authHandler;
+    private final FileHandler fileHandler;
+
+    @Autowired
+    public NettyConnector(AuthHandler authHandler, FileHandler fileHandler) {
         init("localhost", 23232);
+        this.authHandler = authHandler;
+        this.fileHandler = fileHandler;
     }
 
     public void init(String host, int port) {
@@ -35,8 +42,8 @@ public class NettyConnector {
                     ch.pipeline().addLast(
                             new ObjectEncoder(),
                             new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                            new AuthHandler(),
-                            new FileHandler()
+                            authHandler,
+                            fileHandler
                     );
                 }
             });
@@ -50,4 +57,6 @@ public class NettyConnector {
             workerGroup.shutdownGracefully();
         }).start();
     }
+
+
 }

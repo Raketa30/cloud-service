@@ -10,11 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Objects;
 
 @Getter
 @ToString
 public class FileInfo implements Serializable {
     private Path path;
+    @Setter
+    private Path relativePath;
     private String filename;
     private FileType fileType;
     private Long fileSize;
@@ -41,6 +44,21 @@ public class FileInfo implements Serializable {
             throw new RuntimeException("Unable to create file info from path");
         }
         uploadedStatus = "not";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FileInfo)) return false;
+        FileInfo fileInfo = (FileInfo) o;
+        return filename.equals(fileInfo.filename) &&
+                fileType == fileInfo.fileType &&
+                fileSize.equals(fileInfo.fileSize);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(filename, fileType, fileSize);
     }
 
     public enum FileType {

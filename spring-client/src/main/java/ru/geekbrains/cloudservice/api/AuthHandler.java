@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.commands.Response;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
@@ -14,7 +14,7 @@ import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.service.AuthService;
 
 @Slf4j
-@Component
+@Service
 @ChannelHandler.Sharable
 public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo, AuthResponseType>> {
 

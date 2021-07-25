@@ -37,7 +37,7 @@ public class ServerAuthHandler extends SimpleChannelInboundHandler<Request<User,
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Request<User, AuthRequestType> request) throws Exception {
         log.debug("received {}", request.getType().name());
-        Response<UserTo> authResponse;
+        Response<UserTo, AuthResponseType> authResponse;
 
         switch (request.getType()) {
 

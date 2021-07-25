@@ -10,10 +10,10 @@ import javax.persistence.Query;
 import java.util.Optional;
 
 @Slf4j
-public class DBConnection {
+public class UserDBConnection {
     private SessionFactory sessionFactory;
 
-    public DBConnection() {
+    public UserDBConnection() {
         sessionFactory = HibernateUtil.getSessionFactory();
     }
 

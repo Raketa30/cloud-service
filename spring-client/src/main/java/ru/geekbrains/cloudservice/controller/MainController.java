@@ -151,6 +151,11 @@ public class MainController {
                                 "-fx-border-color: aliceblue;  " +
                                 "-fx-text-fill: aliceblue");
                         setGraphic(button);
+
+                        button.setOnMouseClicked(event -> {
+                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            fileService.sendRequestForFileSaving(fileInfo);
+                        });
                     }
                 }
             }
@@ -267,5 +272,6 @@ public class MainController {
         connectionStatusLamp.setFill(Color.GREEN);
         stage.show();
     }
+
 }
 

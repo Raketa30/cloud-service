@@ -12,18 +12,12 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class NettyConnector {
-
-    private AuthHandler authHandler;
-
-    @Autowired
-    public NettyConnector(AuthHandler authHandler) {
-        this.authHandler = authHandler;
+    public NettyConnector() {
         init("localhost", 23232);
     }
 
@@ -41,7 +35,8 @@ public class NettyConnector {
                     ch.pipeline().addLast(
                             new ObjectEncoder(),
                             new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                           authHandler
+                            new AuthHandler(),
+                            new FileHandler()
                     );
                 }
             });

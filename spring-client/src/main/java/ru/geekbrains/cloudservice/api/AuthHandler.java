@@ -9,13 +9,14 @@ import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.commands.Response;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
+import ru.geekbrains.cloudservice.commands.auth.AuthResponseType;
 import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.service.AuthService;
 
 @Slf4j
 @Component
 @ChannelHandler.Sharable
-public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
+public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo, AuthResponseType>> {
 
     @Autowired
     private AuthService authService;
@@ -38,7 +39,7 @@ public class AuthHandler extends SimpleChannelInboundHandler<Response<UserTo>> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Response<UserTo> response) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, Response<UserTo, AuthResponseType> response) throws Exception {
         switch (response.getResponseType()) {
             case LOGIN_OK:
                 /*

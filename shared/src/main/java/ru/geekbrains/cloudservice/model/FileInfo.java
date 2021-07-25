@@ -14,6 +14,7 @@ import java.time.ZoneOffset;
 @Getter
 @ToString
 public class FileInfo implements Serializable {
+    private Path path;
     private String filename;
     private FileType fileType;
     private Long fileSize;
@@ -22,6 +23,7 @@ public class FileInfo implements Serializable {
     private String uploadedStatus;
 
     public FileInfo(Path path) {
+        this.path = path;
         try {
             this.fileSize = Files.size(path);
             this.filename = path.getFileName().toString();
@@ -42,7 +44,7 @@ public class FileInfo implements Serializable {
     }
 
     public enum FileType {
-        FILE("File"), DIRECTORY("Dir");
+        FILE("file"), DIRECTORY("dir");
 
         private String name;
 

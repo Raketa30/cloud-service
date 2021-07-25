@@ -5,8 +5,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.model.FileInfo;
+import ru.geekbrains.cloudservice.model.User;
+import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,12 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class FileServerService {
-    private Path userRootPath;
+    private User activeUser;
+    private UserOperationalPathsRepo userOperationalPathsRepo;
+
+    public FileServerService(UserOperationalPathsRepo userOperationalPathsRepo) {
+        this.userOperationalPathsRepo = userOperationalPathsRepo;
+    }
 
     //создаем папку для пользователя
     public void createUserRootDirectory(String username) {
@@ -23,6 +29,7 @@ public class FileServerService {
     }
 
     public void saveFile(FileInfo requestBody) {
+
     }
 
     public void saveFileList(FileInfo requestBody) {

@@ -1,6 +1,9 @@
 package ru.geekbrains.cloudservice.commands.files;
 
 public enum FilesOperationResponseType {
+    FILE_ALREADY_EXIST,
+    FILE_READY_TO_SAVE,
+
     FILE_SAVED,
     FILES_LIST_SAVED,
 

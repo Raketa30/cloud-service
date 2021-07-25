@@ -1,5 +1,6 @@
 package ru.geekbrains.cloudservice.api;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -10,10 +11,10 @@ import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.service.AuthServerService;
 import ru.geekbrains.cloudservice.service.FileServerService;
 
-import java.nio.file.Paths;
 import java.util.List;
 
 @Slf4j
+@ChannelHandler.Sharable
 public class ServerFilesDataHandler extends SimpleChannelInboundHandler<Request<FileInfo, FileOperationRequestType>> {
     private final AuthServerService authServerService;
     private final FileServerService fileServerService;
@@ -26,7 +27,7 @@ public class ServerFilesDataHandler extends SimpleChannelInboundHandler<Request<
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         User user = authServerService.getUserFormContext(ctx);
-        fileServerService.setUserRootPath(Paths.get(user.getServerRootPath()));
+        fileServerService.setActiveUser(user);
         log.info("user {} active", user.getUsername());
     }
 

@@ -18,14 +18,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class NettyConnector {
-    private final AuthHandler authHandler;
-    private final FileHandler fileHandler;
+    @Autowired
+    private ClientHandler clientHandler;
 
     @Autowired
-    public NettyConnector(AuthHandler authHandler, FileHandler fileHandler) {
+    public NettyConnector(ClientHandler clientHandler) {
         init("localhost", 23232);
-        this.authHandler = authHandler;
-        this.fileHandler = fileHandler;
     }
 
     public void init(String host, int port) {
@@ -39,12 +37,10 @@ public class NettyConnector {
             bootstrapClient.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(
-                            new ObjectEncoder(),
-                            new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                            authHandler,
-                            fileHandler
-                    );
+                    ch.pipeline()
+                            .addLast("objectEncoder",new ObjectEncoder())
+                            .addLast("objectDecoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
+                            .addLast("authHandler", clientHandler);
                 }
             });
 

@@ -35,12 +35,10 @@ public class NettyServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            socketChannel.pipeline().addLast(
-                                    new ObjectEncoder(),
-                                    new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    new ServerAuthHandler(authServerService),
-                                    new ServerFilesDataHandler(authServerService)
-                            );
+                            socketChannel.pipeline()
+                                    .addLast("objectEncoder",new ObjectEncoder())
+                                    .addLast("objectDecoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
+                                    .addLast("authHandler", new ServerClientHandler(authServerService));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)

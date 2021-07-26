@@ -2,9 +2,10 @@ package ru.geekbrains.cloudservice.service;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.api.AuthHandler;
+import ru.geekbrains.cloudservice.api.ClientHandler;
+import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
+import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
 import ru.geekbrains.cloudservice.dto.UserTo;
 
 import java.io.File;
@@ -19,11 +20,9 @@ import java.util.Scanner;
 @Slf4j
 @Service
 public class AuthService {
-    @Autowired
-    private AuthHandler authHandler;
+    private ClientHandler clientHandler;
 
     private String userFolderPath;
-
     private UserTo userTo;
 
     //флаги хрень - потом переписать
@@ -41,7 +40,11 @@ public class AuthService {
     }
 
     public void userLogin(String username, String password) {
-        authHandler.sendLoginRequest(username, password);
+        clientHandler.sendRequestToServer(new AuthRequest(username, password, AuthRequestType.LOGIN));
+    }
+
+    public void registerUser(String username, String password) {
+        clientHandler.sendRequestToServer(new AuthRequest(username, password, AuthRequestType.REGISTRATION));
     }
 
     public void confirmLoginRequest(UserTo userFromRequest) {
@@ -51,10 +54,6 @@ public class AuthService {
         Optional<String> optionalPath = findUserFolderPath();
         optionalPath.ifPresent(s -> this.userFolderPath = s);
         log.info("logged {}", loginConfirm);
-    }
-
-    public void registerUser(String username, String password) {
-        authHandler.sendRegistrationRequest(username, password);
     }
 
     public boolean isLoginConfirm() {
@@ -148,5 +147,9 @@ public class AuthService {
         this.loginDecline = false;
         this.registrationConfirm = false;
         this.registrationDecline = false;
+    }
+
+    public void setClientHandler(ClientHandler clientHandler) {
+        this.clientHandler = clientHandler;
     }
 }

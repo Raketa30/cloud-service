@@ -1,9 +1,6 @@
 package ru.geekbrains.cloudservice.service;
 
 import io.netty.channel.ChannelHandlerContext;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
@@ -22,15 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@Getter
-@Setter
-@NoArgsConstructor
 public class FileServerService {
     private User activeUser;
     private UserOperationalPathsRepo userOperationalPathsRepo;
 
-    public FileServerService(UserOperationalPathsRepo userOperationalPathsRepo) {
-        this.userOperationalPathsRepo = userOperationalPathsRepo;
+    public FileServerService() {
+
+        this.userOperationalPathsRepo = new UserOperationalPathsRepo();
     }
 
     //создаем папку для пользователя
@@ -76,5 +71,9 @@ public class FileServerService {
         }
         return new FileOperationResponse(FilesOperationResponseType.FILE_READY_TO_SAVE, fileInfo);
 
+    }
+
+    public void setActiveUser(User activeUser) {
+        this.activeUser = activeUser;
     }
 }

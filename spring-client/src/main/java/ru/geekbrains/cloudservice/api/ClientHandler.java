@@ -1,9 +1,8 @@
 package ru.geekbrains.cloudservice.api;
 
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,7 +15,7 @@ import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 @Slf4j
 @ChannelHandler.Sharable
 @Controller
-public class ClientHandler extends ChannelInboundHandlerAdapter {
+public class ClientHandler extends SimpleChannelInboundHandler<ResponseMessage> {
 
     @Autowired
     private AuthResponseHandler authResponseHandler;
@@ -51,15 +50,14 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void sendRequestToServer(RequestMessage requestMessage) {
-//        channelHandlerContext.channel().writeAndFlush(responseMessage);
-        channelHandlerContext.writeAndFlush(requestMessage).addListener((ChannelFutureListener) future -> log.info("channel future op complete"));
+        channelHandlerContext.channel().writeAndFlush(requestMessage);
+//        channelHandlerContext.writeAndFlush(requestMessage).addListener((ChannelFutureListener) future -> log.info("channel future op complete"));
 
         log.info("sent {}", requestMessage.getRequest());
     }
-
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object object) throws Exception {
-        ResponseMessage responseMessage = (ResponseMessage) object;
+    protected void channelRead0(ChannelHandlerContext ctx, ResponseMessage msg) throws Exception {
+        ResponseMessage responseMessage = msg;
         Response response = responseMessage.getResponse();
         if (response instanceof AuthResponse) {
             authResponseHandler.processHandler(responseMessage);
@@ -68,7 +66,6 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         if (response instanceof FileOperationResponse) {
             filesOperationResponseHandler.processHandler(responseMessage);
         }
-        ctx.fireChannelActive();
     }
 
     public ChannelHandlerContext getChannelHandlerContext() {

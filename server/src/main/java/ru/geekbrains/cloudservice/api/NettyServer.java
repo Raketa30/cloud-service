@@ -37,8 +37,8 @@ public class NettyServer {
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             socketChannel.pipeline()
                                     .addLast("objectEncoder",new ObjectEncoder())
-                                    .addLast("objectDecoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
-                                    .addLast("authHandler", new ServerClientHandler(authServerService));
+                                    .addLast("objectDecoder", new ObjectDecoder(50 * 1024 * 1024, ClassResolvers.cacheDisabled(null)))
+                                    .addLast("clientHandler", new ServerClientHandler(authServerService));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)

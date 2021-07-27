@@ -18,41 +18,39 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class NettyConnector {
-    @Autowired
     private ClientHandler clientHandler;
 
+    public NettyConnector() {
+        new Thread(() -> init("localhost", 23232)).start();
+    }
+
     @Autowired
-    public NettyConnector(ClientHandler clientHandler) {
-        init("localhost", 23232);
+    public void setClientHandler(ClientHandler clientHandler) {
+        this.clientHandler = clientHandler;
     }
 
-    public void init(String host, int port) {
-
-        new Thread(() -> {
-            EventLoopGroup workerGroup = new NioEventLoopGroup();
-            Bootstrap bootstrapClient = new Bootstrap();
-            bootstrapClient.group(workerGroup);
-            bootstrapClient.channel(NioSocketChannel.class);
-            bootstrapClient.option(ChannelOption.SO_KEEPALIVE, true);
-            bootstrapClient.handler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline()
-                            .addLast("objectEncoder",new ObjectEncoder())
-                            .addLast("objectDecoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)))
-                            .addLast("authHandler", clientHandler);
-                }
-            });
-
-            try {
-                ChannelFuture channelFuture = bootstrapClient.connect(host, port).sync();
-                channelFuture.channel().closeFuture().sync();
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
+    private void init(String host, int port) {
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        Bootstrap bootstrapClient = new Bootstrap();
+        bootstrapClient.group(workerGroup);
+        bootstrapClient.channel(NioSocketChannel.class);
+        bootstrapClient.option(ChannelOption.SO_KEEPALIVE, true);
+        bootstrapClient.handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline()
+                        .addLast("objectEncoder", new ObjectEncoder())
+                        .addLast("objectDecoder", new ObjectDecoder(50 * 1024 * 1024, ClassResolvers.cacheDisabled(null)))
+                        .addLast("authHandler", clientHandler);
             }
-            workerGroup.shutdownGracefully();
-        }).start();
+        });
+
+        try {
+            ChannelFuture channelFuture = bootstrapClient.connect(host, port).sync();
+            channelFuture.channel().closeFuture().sync();
+        } catch (InterruptedException interruptedException) {
+            interruptedException.printStackTrace();
+        }
+        workerGroup.shutdownGracefully();
     }
-
-
 }

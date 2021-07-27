@@ -18,6 +18,7 @@ import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.model.FileInfo;
+import ru.geekbrains.cloudservice.model.FileType;
 import ru.geekbrains.cloudservice.service.AuthService;
 import ru.geekbrains.cloudservice.service.FileService;
 
@@ -191,7 +192,7 @@ public class MainController {
 
         try {
             rootFoldersList.getItems().addAll(Files.list(authService.getUserFolderPath())
-                    .filter(path -> new FileInfo(path).getFileType() == FileInfo.FileType.DIRECTORY)
+                    .filter(path -> new FileInfo(path).getFileType() == FileType.DIRECTORY)
                     .map(s -> new FileInfo(s).getFilename())
                     .collect(Collectors.toList())
             );

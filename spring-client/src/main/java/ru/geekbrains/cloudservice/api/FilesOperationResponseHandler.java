@@ -2,7 +2,7 @@ package ru.geekbrains.cloudservice.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.commands.Response;
+import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
 import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.service.FileService;
@@ -15,11 +15,13 @@ public class FilesOperationResponseHandler {
         this.fileService = fileService;
     }
 
-    public void processHandler(Response<FileInfo, FilesOperationResponseType> response) {
-        switch (response.getResponseType()) {
+    public void processHandler(ResponseMessage responseMessage) {
+        FilesOperationResponseType fileOperationRequestType = (FilesOperationResponseType) responseMessage.getResponse().getResponseType();
+
+        switch (fileOperationRequestType) {
             case FILE_READY_TO_SAVE:
-                FileInfo responseBody = response.getResponseBody();
-                fileService.sendFileToServer(responseBody);
+                FileInfo responseBody = (FileInfo) responseMessage.getAbstractMessageObject();
+                fileService.sendRequestForFileSaving(responseBody);
                 break;
             case FILE_ALREADY_EXIST:
                 break;

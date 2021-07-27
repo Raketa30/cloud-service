@@ -3,10 +3,12 @@ package ru.geekbrains.cloudservice.api;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.commands.Request;
+import ru.geekbrains.cloudservice.commands.RequestMessage;
+import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
 import ru.geekbrains.cloudservice.commands.auth.AuthResponse;
 import ru.geekbrains.cloudservice.commands.auth.AuthResponseType;
+import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.service.AuthServerService;
 
@@ -22,31 +24,34 @@ public class ServerAuthHandler {
         this.authServerService = authServerService;
     }
 
-    public void processRequest(Request<User, AuthRequestType> request, ChannelHandlerContext ctx) {
-        switch (request.getType()) {
+    public void processRequest(RequestMessage requestMessage, ChannelHandlerContext ctx) {
+        AuthRequestType requestType = (AuthRequestType) requestMessage.getRequest().getRequestCommandType();
+
+        switch (requestType) {
             case LOGIN:
-                Optional<User> optionalUser = authServerService.loginRequest(request.getRequestBody());
+                User tempUser = (User) requestMessage.getAbstractMessageObject();
+                Optional<User> optionalUser = authServerService.loginRequest(tempUser);
                 if (optionalUser.isPresent()) {
                     User user = optionalUser.get();
-                    ctx.writeAndFlush(new AuthResponse(AuthResponseType.LOGIN_OK, user));
+                    ctx.writeAndFlush(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_OK), new UserTo(user.getUsername())));
                     activeUser = user;
                     break;
                 }
-                ctx.writeAndFlush(new AuthResponse(AuthResponseType.LOGIN_WRONG));
+                ctx.channel().writeAndFlush(new AuthResponse(AuthResponseType.LOGIN_WRONG));
                 break;
 
             case REGISTRATION:
-                User user = request.getRequestBody();
+                User user = (User) requestMessage.getAbstractMessageObject();
                 Optional<User> optionalUser1 = authServerService.findUserByUsername(user.getUsername());
 
                 if (optionalUser1.isEmpty()) {
                     authServerService.registerNewUser(user);
-                    ctx.writeAndFlush(new AuthResponse(AuthResponseType.REGISTRATION_OK, user));
+                    ctx.writeAndFlush(new ResponseMessage(new AuthResponse(AuthResponseType.REGISTRATION_OK), new UserTo(user.getUsername())));
                     log.info(user.toString());
                     break;
                 }
 
-                ctx.writeAndFlush(new AuthResponse(AuthResponseType.REGISTRATION_WRONG_USER_EXIST));
+                ctx.channel().writeAndFlush(new AuthResponse(AuthResponseType.REGISTRATION_WRONG_USER_EXIST));
                 break;
 
             case LOGOUT:

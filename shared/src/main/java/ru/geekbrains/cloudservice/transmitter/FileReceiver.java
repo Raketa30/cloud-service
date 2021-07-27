@@ -1,4 +1,4 @@
-package ru.geekbrains.cloudservice.commands.transmitter;
+package ru.geekbrains.cloudservice.transmitter;
 
 import java.io.IOException;
 import java.nio.channels.SocketChannel;

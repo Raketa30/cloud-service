@@ -1,15 +1,18 @@
 package ru.geekbrains.cloudservice.api;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.commands.Request;
-import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
-import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
+import ru.geekbrains.cloudservice.commands.RequestMessage;
+import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
+import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
 import ru.geekbrains.cloudservice.service.AuthServerService;
 
 @Slf4j
-public class ServerClientHandler extends SimpleChannelInboundHandler<Request<?, ?>> {
+@ChannelHandler.Sharable
+public class ServerClientHandler extends ChannelInboundHandlerAdapter {
     private final ServerAuthHandler serverAuthHandler;
     private ServerFilesOperationHandler serverFilesOperationHandler;
 
@@ -37,20 +40,22 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Request<?, 
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Request request) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object object) throws Exception {
+        RequestMessage requestMessage = (RequestMessage) object;
+        Request request = requestMessage.getRequest();
 
-        if (request.getType() instanceof AuthRequestType) {
-            serverAuthHandler.processRequest(request, ctx);
+        if (request instanceof AuthRequest) {
+            serverAuthHandler.processRequest(requestMessage, ctx);
         }
-        if (request.getType() instanceof FileOperationRequestType) {
+        if (request instanceof FileOperationRequest) {
             if (serverAuthHandler.getActiveUser() != null) {
                 log.warn("user not loggined for file operations");
             } else {
                 serverFilesOperationHandler.setActiveUser(serverAuthHandler.getActiveUser());
-                serverFilesOperationHandler.processRequest(request, ctx);
+                serverFilesOperationHandler.processRequest(requestMessage, ctx);
             }
         }
 
-
+        ctx.fireChannelActive();
     }
 }

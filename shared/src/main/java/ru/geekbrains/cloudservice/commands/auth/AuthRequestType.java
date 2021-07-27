@@ -1,6 +1,8 @@
 package ru.geekbrains.cloudservice.commands.auth;
 
-public enum AuthRequestType {
+import ru.geekbrains.cloudservice.commands.CommandType;
+
+public enum AuthRequestType implements CommandType {
     LOGIN,
     REGISTRATION,
     LOGOUT

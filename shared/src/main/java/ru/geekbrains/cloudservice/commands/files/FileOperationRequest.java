@@ -1,17 +1,17 @@
 package ru.geekbrains.cloudservice.commands.files;
 
 import ru.geekbrains.cloudservice.commands.CommandType;
-import ru.geekbrains.cloudservice.commands.Response;
+import ru.geekbrains.cloudservice.commands.Request;
 
-public class FileOperationResponse implements Response {
+public class FileOperationRequest implements Request {
     private final CommandType commandType;
 
-    public FileOperationResponse(CommandType commandType) {
+    public FileOperationRequest(CommandType commandType) {
         this.commandType = commandType;
     }
 
     @Override
-    public CommandType getResponseType() {
+    public CommandType getRequestCommandType() {
         return commandType;
     }
 }

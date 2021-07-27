@@ -1,6 +1,8 @@
 package ru.geekbrains.cloudservice.commands.auth;
 
-public enum AuthResponseType {
+import ru.geekbrains.cloudservice.commands.CommandType;
+
+public enum AuthResponseType implements CommandType {
     LOGIN_OK,
     LOGIN_WRONG,
     REGISTRATION_OK,

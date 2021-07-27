@@ -1,4 +1,4 @@
-package ru.geekbrains.cloudservice.commands.transmitter;
+package ru.geekbrains.cloudservice.transmitter;
 
 import ru.geekbrains.cloudservice.commands.Constants;
 

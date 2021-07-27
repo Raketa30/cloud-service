@@ -3,6 +3,7 @@ package ru.geekbrains.cloudservice.model;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import ru.geekbrains.cloudservice.commands.AbstractMessage;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -14,7 +15,7 @@ import java.util.Objects;
 
 @Getter
 @ToString
-public class FileInfo implements Serializable {
+public class FileInfo implements AbstractMessage, Serializable {
     private Path path;
     @Setter
     private Path relativePath;
@@ -59,19 +60,5 @@ public class FileInfo implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(filename, fileType, fileSize);
-    }
-
-    public enum FileType {
-        FILE("file"), DIRECTORY("dir");
-
-        private String name;
-
-        FileType(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
     }
 }

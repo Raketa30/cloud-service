@@ -64,7 +64,7 @@ public class AuthController {
 
         authService.userLogin(username, password);
 
-        while (!authService.isLoginConfirm()|| !authService.isLoginDecline()) {
+        while (!authService.isLoginConfirm() || !authService.isLoginDecline()) {
             if (authService.isLoginConfirm()) {
                 Optional<String> userPath = authService.findUserFolderPath();
 
@@ -81,6 +81,7 @@ public class AuthController {
 
             if(authService.isLoginDecline()) {
                 //выводим лэйбл о том что неудачный вход
+                fxWeaver.loadController(AuthController.class).show();
                 break;
             }
         }
@@ -99,6 +100,7 @@ public class AuthController {
     }
 
     public void show() {
+        authService.resetFlags();
         this.stage = new Stage();
         stage.setScene(new Scene(mainDialog));
         stage.setMinWidth(650);

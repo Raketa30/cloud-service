@@ -2,11 +2,15 @@ package ru.geekbrains.cloudservice.service;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.api.ClientHandler;
+import ru.geekbrains.cloudservice.commands.AbstractMessage;
+import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
 import ru.geekbrains.cloudservice.dto.UserTo;
+import ru.geekbrains.cloudservice.model.User;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -20,6 +24,7 @@ import java.util.Scanner;
 @Slf4j
 @Service
 public class AuthService {
+    @Autowired
     private ClientHandler clientHandler;
 
     private String userFolderPath;
@@ -40,17 +45,20 @@ public class AuthService {
     }
 
     public void userLogin(String username, String password) {
-        clientHandler.sendRequestToServer(new AuthRequest(username, password, AuthRequestType.LOGIN));
+        AbstractMessage abstractMessage = new User(username, password);
+        clientHandler.sendRequestToServer(new RequestMessage(new AuthRequest(AuthRequestType.LOGIN), abstractMessage ));
     }
+
 
     public void registerUser(String username, String password) {
-        clientHandler.sendRequestToServer(new AuthRequest(username, password, AuthRequestType.REGISTRATION));
+        AbstractMessage abstractMessage = new User(username, password);
+        clientHandler.sendRequestToServer(new RequestMessage(new AuthRequest(AuthRequestType.REGISTRATION),abstractMessage) );
     }
 
-    public void confirmLoginRequest(UserTo userFromRequest) {
+    public void confirmLoginRequest(AbstractMessage userFromRequest) {
         //вывести главное окно с именем польователя
         this.loginConfirm = true;
-        this.userTo = userFromRequest;
+        this.userTo = (UserTo)userFromRequest;
         Optional<String> optionalPath = findUserFolderPath();
         optionalPath.ifPresent(s -> this.userFolderPath = s);
         log.info("logged {}", loginConfirm);
@@ -68,7 +76,7 @@ public class AuthService {
         loginDecline = true;
     }
 
-    public void confirmRegistration(UserTo usr) {
+    public void confirmRegistration() {
         registrationConfirm = true;
     }
 

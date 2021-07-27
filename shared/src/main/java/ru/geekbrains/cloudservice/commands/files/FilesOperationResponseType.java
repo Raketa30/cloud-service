@@ -1,6 +1,8 @@
 package ru.geekbrains.cloudservice.commands.files;
 
-public enum FilesOperationResponseType {
+import ru.geekbrains.cloudservice.commands.CommandType;
+
+public enum FilesOperationResponseType implements CommandType {
     FILE_ALREADY_EXIST,
     FILE_READY_TO_SAVE,
 

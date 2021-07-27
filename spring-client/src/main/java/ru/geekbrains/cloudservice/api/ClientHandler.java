@@ -1,20 +1,23 @@
 package ru.geekbrains.cloudservice.api;
 
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.commands.Request;
+import org.springframework.stereotype.Controller;
+import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.Response;
-import ru.geekbrains.cloudservice.commands.auth.AuthResponseType;
+import ru.geekbrains.cloudservice.commands.ResponseMessage;
+import ru.geekbrains.cloudservice.commands.auth.AuthResponse;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 
 @Slf4j
 @ChannelHandler.Sharable
-@Service
-public class ClientHandler extends SimpleChannelInboundHandler<Response<?,?>> {
+@Controller
+public class ClientHandler extends ChannelInboundHandlerAdapter {
+
     @Autowired
     private AuthResponseHandler authResponseHandler;
     @Autowired
@@ -47,21 +50,25 @@ public class ClientHandler extends SimpleChannelInboundHandler<Response<?,?>> {
         log.info("Clienthandler inactive {}", ctx);
     }
 
-    public void sendRequestToServer(Request<?, ?> request) {
-        channelHandlerContext.writeAndFlush(request);
-        log.info("sent {}", request.getType());
+    public void sendRequestToServer(RequestMessage requestMessage) {
+//        channelHandlerContext.channel().writeAndFlush(responseMessage);
+        channelHandlerContext.writeAndFlush(requestMessage).addListener((ChannelFutureListener) future -> log.info("channel future op complete"));
+
+        log.info("sent {}", requestMessage.getRequest());
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Response response) throws Exception {
-        if (response.getResponseType() instanceof AuthResponseType) {
-            authResponseHandler.processHandler(response);
+    public void channelRead(ChannelHandlerContext ctx, Object object) throws Exception {
+        ResponseMessage responseMessage = (ResponseMessage) object;
+        Response response = responseMessage.getResponse();
+        if (response instanceof AuthResponse) {
+            authResponseHandler.processHandler(responseMessage);
         }
 
-        if (response.getResponseType() instanceof FileOperationResponse) {
-            filesOperationResponseHandler.processHandler(response);
+        if (response instanceof FileOperationResponse) {
+            filesOperationResponseHandler.processHandler(responseMessage);
         }
-
+        ctx.fireChannelActive();
     }
 
     public ChannelHandlerContext getChannelHandlerContext() {

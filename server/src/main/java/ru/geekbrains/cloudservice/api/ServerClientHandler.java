@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
+import ru.geekbrains.cloudservice.commands.Message;
 import ru.geekbrains.cloudservice.commands.Request;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
@@ -12,7 +13,7 @@ import ru.geekbrains.cloudservice.service.AuthServerService;
 
 @Slf4j
 @ChannelHandler.Sharable
-public class ServerClientHandler extends SimpleChannelInboundHandler<RequestMessage> {
+public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
     private final ServerAuthHandler serverAuthHandler;
     private ServerFilesOperationHandler serverFilesOperationHandler;
 
@@ -40,8 +41,8 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<RequestMess
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, RequestMessage msg) throws Exception {
-        RequestMessage requestMessage = msg;
+    protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
+        RequestMessage requestMessage = (RequestMessage) msg;
         Request request = requestMessage.getRequest();
 
         if (request instanceof AuthRequest) {

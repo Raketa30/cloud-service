@@ -1,4 +1,6 @@
 package ru.geekbrains.cloudservice.commands;
 
-public interface CommandType {
+import java.io.Serializable;
+
+public interface CommandType extends Serializable {
 }

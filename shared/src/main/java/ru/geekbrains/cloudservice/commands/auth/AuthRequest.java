@@ -4,7 +4,7 @@ import ru.geekbrains.cloudservice.commands.CommandType;
 import ru.geekbrains.cloudservice.commands.Request;
 
 public class AuthRequest implements Request {
-    CommandType commandType;
+    private final CommandType commandType;
 
     public AuthRequest(CommandType commandType) {
         this.commandType = commandType;

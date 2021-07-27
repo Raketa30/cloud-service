@@ -1,8 +1,6 @@
 package ru.geekbrains.cloudservice.commands;
 
-import java.io.Serializable;
-
-public class RequestMessage  implements Serializable {
+public class RequestMessage extends Message {
     private final Request request;
     private final AbstractMessage abstractMessage;
 
@@ -10,7 +8,7 @@ public class RequestMessage  implements Serializable {
         this.request = request;
         this.abstractMessage = abstractMessage;
     }
-
+    @Override
     public AbstractMessage getAbstractMessageObject() {
         return abstractMessage;
     }

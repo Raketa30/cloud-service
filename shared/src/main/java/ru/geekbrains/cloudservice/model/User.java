@@ -7,7 +7,6 @@ import lombok.ToString;
 import ru.geekbrains.cloudservice.commands.AbstractMessage;
 
 import javax.persistence.*;
-import java.io.Serializable;
 
 @NoArgsConstructor
 @Getter
@@ -15,7 +14,7 @@ import java.io.Serializable;
 @ToString
 @Entity
 @Table(name = "users")
-public class User implements AbstractMessage, Serializable {
+public class User extends AbstractMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

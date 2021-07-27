@@ -4,10 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import ru.geekbrains.cloudservice.commands.AbstractMessage;
 
-import java.io.Serializable;
-
 @AllArgsConstructor
 @Getter
-public class UserTo implements AbstractMessage, Serializable {
+public class UserTo extends AbstractMessage {
     private String username;
 }

@@ -1,5 +1,7 @@
 package ru.geekbrains.cloudservice.commands;
 
-public interface Request {
+import java.io.Serializable;
+
+public interface Request extends Serializable {
    CommandType getRequestCommandType();
 }

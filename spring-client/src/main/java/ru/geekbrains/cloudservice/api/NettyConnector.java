@@ -21,7 +21,7 @@ public class NettyConnector {
     private ClientHandler clientHandler;
 
     public NettyConnector() {
-        new Thread(() -> init("localhost", 23232)).start();
+        new Thread(() -> init("localhost", 8189)).start();
     }
 
     @Autowired

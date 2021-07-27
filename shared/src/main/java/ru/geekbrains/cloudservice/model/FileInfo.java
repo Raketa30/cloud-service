@@ -6,7 +6,6 @@ import lombok.ToString;
 import ru.geekbrains.cloudservice.commands.AbstractMessage;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -15,7 +14,7 @@ import java.util.Objects;
 
 @Getter
 @ToString
-public class FileInfo implements AbstractMessage, Serializable {
+public class FileInfo extends AbstractMessage{
     private Path path;
     @Setter
     private Path relativePath;

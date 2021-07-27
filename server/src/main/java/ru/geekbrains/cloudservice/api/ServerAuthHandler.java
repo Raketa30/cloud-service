@@ -35,9 +35,11 @@ public class ServerAuthHandler {
                     User user = optionalUser.get();
                     ctx.writeAndFlush(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_OK), new UserTo(user.getUsername())));
                     activeUser = user;
+                    log.info("user {} successfully logged", user);
                     break;
                 }
-                ctx.channel().writeAndFlush(new AuthResponse(AuthResponseType.LOGIN_WRONG));
+                ctx.channel().writeAndFlush(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));
+                log.info("wrong login attempt");
                 break;
 
             case REGISTRATION:
@@ -52,6 +54,7 @@ public class ServerAuthHandler {
                 }
 
                 ctx.channel().writeAndFlush(new AuthResponse(AuthResponseType.REGISTRATION_WRONG_USER_EXIST));
+                log.info("wrong registration attempt, user exist");
                 break;
 
             case LOGOUT:

@@ -1,4 +1,6 @@
 package ru.geekbrains.cloudservice.commands;
 
-public interface AbstractMessage {
+import java.io.Serializable;
+
+public class AbstractMessage implements Serializable {
 }

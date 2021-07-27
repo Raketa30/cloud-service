@@ -1,21 +1,20 @@
 package ru.geekbrains.cloudservice.api;
 
-import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import ru.geekbrains.cloudservice.commands.RequestMessage;
+import ru.geekbrains.cloudservice.commands.Message;
 import ru.geekbrains.cloudservice.commands.Response;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.auth.AuthResponse;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 
 @Slf4j
-@ChannelHandler.Sharable
 @Controller
-public class ClientHandler extends SimpleChannelInboundHandler<ResponseMessage> {
+public class ClientHandler extends SimpleChannelInboundHandler<Message> {
 
     @Autowired
     private AuthResponseHandler authResponseHandler;
@@ -49,15 +48,15 @@ public class ClientHandler extends SimpleChannelInboundHandler<ResponseMessage> 
         log.info("Clienthandler inactive {}", ctx);
     }
 
-    public void sendRequestToServer(RequestMessage requestMessage) {
-        channelHandlerContext.channel().writeAndFlush(requestMessage);
-//        channelHandlerContext.writeAndFlush(requestMessage).addListener((ChannelFutureListener) future -> log.info("channel future op complete"));
+    public void sendRequestToServer(Message requestMessage) {
+//        channelHandlerContext.writeAndFlush(requestMessage);
+        channelHandlerContext.writeAndFlush(requestMessage).addListener((ChannelFutureListener) future -> log.info("channel future op complete"));
 
-        log.info("sent {}", requestMessage.getRequest());
+        log.info("sent {}", requestMessage);
     }
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, ResponseMessage msg) throws Exception {
-        ResponseMessage responseMessage = msg;
+    protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
+        ResponseMessage responseMessage = (ResponseMessage) msg;
         Response response = responseMessage.getResponse();
         if (response instanceof AuthResponse) {
             authResponseHandler.processHandler(responseMessage);

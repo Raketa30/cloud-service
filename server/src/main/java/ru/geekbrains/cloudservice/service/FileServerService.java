@@ -40,7 +40,7 @@ public class FileServerService {
 
     public void saveFile(RequestMessage requestMessage, ChannelHandlerContext ctx) {
         FileInfo fileInfo = (FileInfo) requestMessage.getAbstractMessageObject();
-        Path fullPath = Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/server/main_root_folder" +
+        Path fullPath = Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/server/main_root_folder/" +
                 activeUser.getServerRootPath()).resolve(fileInfo.getFilePath());
         try {
             File file = fullPath.toFile();

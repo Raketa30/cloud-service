@@ -11,6 +11,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
+import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -41,6 +42,7 @@ public class NettyConnector {
                 ch.pipeline()
                         .addLast("objectEncoder", new ObjectEncoder())
                         .addLast("objectDecoder", new ObjectDecoder(50 * 1024 * 1024, ClassResolvers.cacheDisabled(null)))
+                        .addLast("chunkedWriteHandler", new ChunkedWriteHandler())
                         .addLast("authHandler", clientHandler);
             }
         });

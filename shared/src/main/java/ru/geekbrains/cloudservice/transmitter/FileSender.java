@@ -1,23 +1,28 @@
 package ru.geekbrains.cloudservice.transmitter;
 
-import ru.geekbrains.cloudservice.commands.Constants;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.DefaultFileRegion;
+import io.netty.channel.FileRegion;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.channels.SocketChannel;
 
 public class FileSender {
 
-    private final SocketChannel socketChannel;
+    private final ChannelHandlerContext channelHandlerContext;
 
-    public FileSender(SocketChannel socketChannel) {
-        this.socketChannel = socketChannel;
+    public FileSender(ChannelHandlerContext channelHandlerContext) {
+        this.channelHandlerContext = channelHandlerContext;
     }
 
     public void transfer(FileChannel fileChannel, long position, long size) throws IOException {
+
+        FileRegion fileRegion = new DefaultFileRegion(fileChannel, position, size);
+
         while(position < size) {
-            position += fileChannel.transferTo(position, Constants.TRANSFER_MAX_SIZE, this.socketChannel);
+            position += fileRegion.transferTo(fileChannel, position);
         }
+        channelHandlerContext.writeAndFlush(fileRegion);
     }
 
 }

@@ -1,63 +1,32 @@
 package ru.geekbrains.cloudservice.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import ru.geekbrains.cloudservice.commands.AbstractMessage;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Objects;
+import javax.persistence.*;
 
 @Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "paths")
 @ToString
-public class FileInfo extends AbstractMessage{
-    private Path path;
-    @Setter
-    private Path relativePath;
-    private String filename;
-    private FileType fileType;
-    private Long fileSize;
-    private LocalDateTime lastModified;
-    @Setter
-    private String uploadedStatus;
+public class FileInfo extends AbstractMessage {
 
-    public FileInfo(Path path) {
-        this.path = path;
-        try {
-            this.fileSize = Files.size(path);
-            this.filename = path.getFileName().toString();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-            if (Files.isRegularFile(path)) {
-                fileType = FileType.FILE;
-            } else {
-                fileType = FileType.DIRECTORY;
-                this.fileSize = -1L;
-            }
+    private String fileType;
 
-            this.lastModified = LocalDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(),
-                    ZoneOffset.ofHours(0));
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to create file info from path");
-        }
-        uploadedStatus = "not";
-    }
+    private String filePath;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof FileInfo)) return false;
-        FileInfo fileInfo = (FileInfo) o;
-        return filename.equals(fileInfo.filename) &&
-                fileType == fileInfo.fileType &&
-                fileSize.equals(fileInfo.fileSize);
-    }
+    private Long size;
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(filename, fileType, fileSize);
+    public FileInfo(String filePath, String fileType, Long size) {
+        this.filePath = filePath;
+        this.fileType = fileType;
+        this.size = size;
     }
 }

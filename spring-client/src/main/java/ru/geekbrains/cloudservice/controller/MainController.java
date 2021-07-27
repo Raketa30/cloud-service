@@ -17,8 +17,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.geekbrains.cloudservice.model.FileInfo;
-import ru.geekbrains.cloudservice.model.FileType;
+import ru.geekbrains.cloudservice.model.LocalFileInfo;
 import ru.geekbrains.cloudservice.service.AuthService;
 import ru.geekbrains.cloudservice.service.FileService;
 
@@ -52,10 +51,9 @@ public class MainController {
     private Stage stage;
 
     @FXML
-    private TableView<FileInfo> filesList;
-
+    public TableColumn<LocalFileInfo, String> downloadColumn;
     @FXML
-    private TableColumn<FileInfo, Long> fileSizeColumn;
+    private TableView<LocalFileInfo> filesList;
 
     @FXML
     private ResourceBundle resources;
@@ -68,24 +66,22 @@ public class MainController {
 
     @FXML
     private JFXButton folderUpButton;
+    @FXML
+    private TableColumn<LocalFileInfo, Long> fileSizeColumn;
+    @FXML
+    private TableColumn<LocalFileInfo, String> fileNameColumn;
 
     @FXML
-    public TableColumn<FileInfo, String> downloadColumn;
+    private TableColumn<LocalFileInfo, String> fileTypeColumn;
 
     @FXML
-    private TableColumn<FileInfo, String> fileNameColumn;
+    private TableColumn<LocalFileInfo, String> uploadColumn;
 
     @FXML
-    private TableColumn<FileInfo, String> fileTypeColumn;
+    private TableColumn<LocalFileInfo, String> onAirColumn;
 
     @FXML
-    private TableColumn<FileInfo, String> uploadColumn;
-
-    @FXML
-    private TableColumn<FileInfo, String> onAirColumn;
-
-    @FXML
-    private TableColumn<FileInfo, String> fileLastModifiedColumn;
+    private TableColumn<LocalFileInfo, String> fileLastModifiedColumn;
     @FXML
     private JFXListView<String> rootFoldersList;
 
@@ -101,7 +97,7 @@ public class MainController {
 
     @FXML
     void initialize() {
-        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType().getName()));
+        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType()));
         fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
         fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getFileSize()));
         fileSizeColumn.setCellFactory(column -> new TableCell<>() {
@@ -155,9 +151,9 @@ public class MainController {
                         setGraphic(button);
 
                         button.setOnMouseClicked(event -> {
-                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                            fileInfo.setRelativePath(authService.getUserFolderPath().relativize(fileInfo.getPath()));
-                            fileService.sendRequestForFileSaving(fileInfo);
+                            LocalFileInfo localFileInfo = getTableView().getItems().get(getIndex());
+                            localFileInfo.setRelativePath(authService.getUserFolderPath().relativize(localFileInfo.getPath()));
+                            fileService.sendRequestForFileSaving(localFileInfo);
                         });
                     }
                 }
@@ -192,8 +188,8 @@ public class MainController {
 
         try {
             rootFoldersList.getItems().addAll(Files.list(authService.getUserFolderPath())
-                    .filter(path -> new FileInfo(path).getFileType() == FileType.DIRECTORY)
-                    .map(s -> new FileInfo(s).getFilename())
+                    .filter(path -> new LocalFileInfo(path).getFileType().equals("folder"))
+                    .map(s -> new LocalFileInfo(s).getFilename())
                     .collect(Collectors.toList())
             );
 
@@ -230,7 +226,7 @@ public class MainController {
             filesList.getItems().clear();
             filesList.getItems().addAll(
                     Files.list(path)
-                            .map(FileInfo::new)
+                            .map(LocalFileInfo::new)
                             .collect(Collectors.toList())
             );
             filesList.sort();

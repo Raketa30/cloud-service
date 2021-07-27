@@ -18,6 +18,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message> {
 
     @Autowired
     private AuthResponseHandler authResponseHandler;
+
     @Autowired
     private FilesOperationResponseHandler filesOperationResponseHandler;
 

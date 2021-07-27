@@ -9,7 +9,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import ru.geekbrains.cloudservice.model.FileInfo;
+import ru.geekbrains.cloudservice.model.LocalFileInfo;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -21,19 +21,19 @@ public class ServerPanelController implements Initializable {
     public TextField pathField;
 
     @FXML
-    TableView<FileInfo> filesTable;
+    TableView<LocalFileInfo> filesTable;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        TableColumn<FileInfo, String> fileTypeColumn = new TableColumn<>("Type");
-        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType().getName()));
+        TableColumn<LocalFileInfo, String> fileTypeColumn = new TableColumn<>("Type");
+        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType()));
         fileTypeColumn.setPrefWidth(50);
 
-        TableColumn<FileInfo, String> fileNameColumn = new TableColumn<>("Name");
+        TableColumn<LocalFileInfo, String> fileNameColumn = new TableColumn<>("Name");
         fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
         fileTypeColumn.setPrefWidth(200);
 
-        TableColumn<FileInfo, Long> fileSizeColumn = new TableColumn<>("Size");
+        TableColumn<LocalFileInfo, Long> fileSizeColumn = new TableColumn<>("Size");
         fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getFileSize()));
         fileSizeColumn.setPrefWidth(50);
         fileSizeColumn.setCellFactory(column -> new TableCell<>() {
@@ -55,7 +55,7 @@ public class ServerPanelController implements Initializable {
             }
         });
 
-        TableColumn<FileInfo, String> fileDateColumn = new TableColumn<>("Last Modified");
+        TableColumn<LocalFileInfo, String> fileDateColumn = new TableColumn<>("Last Modified");
         fileDateColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getLastModified().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
         fileDateColumn.setPrefWidth(100);
 

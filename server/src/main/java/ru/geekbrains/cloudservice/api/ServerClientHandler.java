@@ -49,12 +49,7 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
             serverAuthHandler.processRequest(requestMessage, ctx);
         }
         if (request instanceof FileOperationRequest) {
-            if (serverAuthHandler.getActiveUser() != null) {
-                log.warn("user not loggined for file operations");
-            } else {
-                serverFilesOperationHandler.setActiveUser(serverAuthHandler.getActiveUser());
-                serverFilesOperationHandler.processRequest(requestMessage, ctx);
-            }
+            serverFilesOperationHandler.processRequest(requestMessage, ctx, serverAuthHandler.getActiveUser());
         }
     }
 

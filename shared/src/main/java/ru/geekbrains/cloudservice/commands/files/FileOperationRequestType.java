@@ -7,5 +7,6 @@ public enum FileOperationRequestType  implements CommandType {
     SAVE_FILE_REQUEST,
     SAVE_FILES_LIST_REQUEST,
     DOWNLOAD_FILE,
-    DOWNLOAD_FILE_LIST
+    DOWNLOAD_FILE_LIST,
+    FILE_SENDED ;
 }

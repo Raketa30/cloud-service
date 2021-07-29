@@ -18,8 +18,8 @@ import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.model.LocalFileInfo;
-import ru.geekbrains.cloudservice.service.AuthService;
-import ru.geekbrains.cloudservice.service.FileService;
+import ru.geekbrains.cloudservice.service.ClientAuthService;
+import ru.geekbrains.cloudservice.service.ClientFileService;
 
 import java.io.IOException;
 import java.net.URL;
@@ -41,8 +41,8 @@ public class MainController {
     @FXML
     public TextField pathField;
     //Сервисы
-    private AuthService authService;
-    private FileService fileService;
+    private ClientAuthService clientAuthService;
+    private ClientFileService clientFileService;
 
     @FXML
     private BorderPane mainDialog;
@@ -86,10 +86,10 @@ public class MainController {
     private JFXListView<String> rootFoldersList;
 
     @Autowired
-    public MainController(FxWeaver fxWeaver, AuthService authService, FileService fileService) {
+    public MainController(FxWeaver fxWeaver, ClientAuthService clientAuthService, ClientFileService clientFileService) {
         this.fxWeaver = fxWeaver;
-        this.authService = authService;
-        this.fileService = fileService;
+        this.clientAuthService = clientAuthService;
+        this.clientFileService = clientFileService;
     }
 
     @FXML
@@ -152,8 +152,8 @@ public class MainController {
 
                         button.setOnMouseClicked(event -> {
                             LocalFileInfo localFileInfo = getTableView().getItems().get(getIndex());
-                            localFileInfo.setRelativePath(authService.getUserFolderPath().relativize(localFileInfo.getPath()));
-                            fileService.sendRequestForFileSaving(localFileInfo);
+                            localFileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(localFileInfo.getPath()));
+                            clientFileService.sendRequestForFileSaving(localFileInfo);
                         });
                     }
                 }
@@ -187,7 +187,7 @@ public class MainController {
         });
 
         try {
-            rootFoldersList.getItems().addAll(Files.list(authService.getUserFolderPath())
+            rootFoldersList.getItems().addAll(Files.list(clientAuthService.getUserFolderPath())
                     .filter(path -> new LocalFileInfo(path).getFileType().equals("folder"))
                     .map(s -> new LocalFileInfo(s).getFilename())
                     .collect(Collectors.toList())
@@ -198,7 +198,7 @@ public class MainController {
         }
         //gtht[jlbv d gfgrb bp henjdjuj rfnfkjuf
         rootFoldersList.setOnMouseClicked(mouseEvent -> {
-            currentPath = authService.getUserFolderPath().resolve(getSelectedFolder());
+            currentPath = clientAuthService.getUserFolderPath().resolve(getSelectedFolder());
             updateList(currentPath);
         });
 
@@ -214,30 +214,33 @@ public class MainController {
                 }
             }
         });
-        currentPath = authService.getUserFolderPath();
+        currentPath = clientAuthService.getUserFolderPath();
         updateList(currentPath);
     }
 
-
     public void updateList(Path path) {
-        Path relativizedPath = authService.getUserFolderPath().relativize(path);
+        Path relativizedPath = clientAuthService.getUserFolderPath().relativize(path);
         try {
             pathField.setText("/" + relativizedPath.normalize().toString());
+
+            clientFileService.receiveFilesInfoList();
+
             filesList.getItems().clear();
             filesList.getItems().addAll(
-                    Files.list(path)
-                            .map(LocalFileInfo::new)
-                            .collect(Collectors.toList())
+                    clientFileService.getFileInfoSet()
+//                    Files.list(path)
+//                            .map(LocalFileInfo::new)
+//                            .collect(Collectors.toList())
             );
             filesList.sort();
-        } catch (IOException e) {
+        } catch (Exception e) {
             new Alert(Alert.AlertType.WARNING, "Не удалось отобразить список файлов", ButtonType.OK);
         }
 
     }
 
     public void btnPathUpAction(ActionEvent actionEvent) {
-        if (currentPath.equals(authService.getUserFolderPath())) {
+        if (currentPath.equals(clientAuthService.getUserFolderPath())) {
             return;
         }
         Path upPath = currentPath.getParent();
@@ -266,7 +269,7 @@ public class MainController {
     public void show() {
         this.stage = new Stage();
         stage.setScene(new Scene(mainDialog));
-        stage.setTitle(authService.getUserTo().getUsername());
+        stage.setTitle(clientAuthService.getUserTo().getUsername());
         stage.setResizable(false);
         connectionStatusLamp.setFill(Color.GREEN);
         stage.show();

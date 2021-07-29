@@ -3,6 +3,7 @@ package ru.geekbrains.cloudservice.repo;
 import ru.geekbrains.cloudservice.dao.OperationalDBConnection;
 import ru.geekbrains.cloudservice.model.FileInfo;
 
+import java.util.List;
 import java.util.Optional;
 
 public class UserOperationalPathsRepo {
@@ -14,5 +15,9 @@ public class UserOperationalPathsRepo {
 
     public Optional<FileInfo> findFileInfoByRelativePath(String filePath) {
         return operationalDBConnection.findFileByRelativePath(filePath);
+    }
+
+    public Optional<List<FileInfo>> findFilesByParentPath(String filePath) {
+        return operationalDBConnection.findFilesByParentPath(filePath);
     }
 }

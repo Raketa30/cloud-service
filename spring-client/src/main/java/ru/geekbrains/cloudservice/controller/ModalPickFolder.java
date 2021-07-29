@@ -12,7 +12,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.geekbrains.cloudservice.service.AuthService;
+import ru.geekbrains.cloudservice.service.ClientAuthService;
 
 import java.io.File;
 
@@ -22,7 +22,7 @@ import java.io.File;
 public class ModalPickFolder {
 
     private final FxWeaver fxWeaver;
-    private final AuthService authService;
+    private final ClientAuthService clientAuthService;
 
     @FXML
     private Stage stage;
@@ -34,14 +34,14 @@ public class ModalPickFolder {
     private TextField pathTextField;
 
     @Autowired
-    public ModalPickFolder(FxWeaver fxWeaver, AuthService authService) {
+    public ModalPickFolder(FxWeaver fxWeaver, ClientAuthService clientAuthService) {
         this.fxWeaver = fxWeaver;
-        this.authService = authService;
+        this.clientAuthService = clientAuthService;
     }
 
     @FXML
     void closeModalWindow(ActionEvent event) {
-        authService.resetFlags();
+        clientAuthService.resetFlags();
         fxWeaver.loadController(AuthController.class).show();
         this.stage.hide();
     }
@@ -74,7 +74,7 @@ public class ModalPickFolder {
     }
 
     public void confirmUserFolderPath(ActionEvent actionEvent) {
-        authService.createLocalUserDirectory(pathTextField.getText());
+        clientAuthService.createLocalUserDirectory(pathTextField.getText());
         fxWeaver.loadController(MainController.class).show();
         this.stage.hide();
     }

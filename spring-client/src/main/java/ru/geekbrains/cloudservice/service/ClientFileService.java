@@ -15,27 +15,37 @@ import ru.geekbrains.cloudservice.model.LocalFileInfo;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Service
-public class FileService {
+public class ClientFileService {
     private final ClientHandler clientHandler;
-    private final AuthService authService;
+    private final ClientAuthService clientAuthService;
+    private final Set<LocalFileInfo> fileInfoSet;
 
     @Autowired
-    public FileService(ClientHandler clientHandler, AuthService authService) {
+    public ClientFileService(ClientHandler clientHandler, ClientAuthService clientAuthService) {
         this.clientHandler = clientHandler;
-        this.authService = authService;
+        this.clientAuthService = clientAuthService;
+        this.fileInfoSet = new HashSet<>();
     }
 
     public void sendRequestForFileSaving(LocalFileInfo localFileInfo) {
-        AbstractMessage fileInfo = new FileInfo(localFileInfo.getRelativePath().toString(), localFileInfo.getFileType(), localFileInfo.getFileSize());
-        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
+        String relativePath = localFileInfo.getRelativePath().toString();
+        String fileType = localFileInfo.getFileType();
+        Long fileSize = localFileInfo.getFileSize();
+
+        AbstractMessage fileInfo = new FileInfo(relativePath, fileType, fileSize);
+        clientHandler.sendRequestToServer(new RequestMessage(
+                new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
+
         log.info("sendRequestForFileSaving {}", localFileInfo);
     }
 
     public void sendFileToServer(FileInfo responseBody) {
-        Path filePath = authService.getUserFolderPath().resolve(responseBody.getFilePath());
+        Path filePath = clientAuthService.getUserFolderPath().resolve(responseBody.getFilePath());
         try {
             ChannelHandlerContext context = clientHandler.getChannelHandlerContext();
             context.write(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
@@ -66,5 +76,13 @@ public class FileService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    //запрос списка файла с сервера
+    public void receiveFilesInfoList() {
+        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST)));
+    }
+
+    public Set<LocalFileInfo> getFileInfoSet() {
+        return fileInfoSet;
     }
 }

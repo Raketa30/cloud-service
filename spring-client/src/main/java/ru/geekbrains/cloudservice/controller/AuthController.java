@@ -13,7 +13,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.geekbrains.cloudservice.service.AuthService;
+import ru.geekbrains.cloudservice.service.ClientAuthService;
 
 import java.net.URL;
 import java.util.Optional;
@@ -28,14 +28,14 @@ public class AuthController {
 
     public AnchorPane mainDialog;
 
-    private AuthService authService;
+    private ClientAuthService clientAuthService;
 
     private Stage stage;
 
     @Autowired
-    public AuthController(FxWeaver fxWeaver, AuthService authService) {
+    public AuthController(FxWeaver fxWeaver, ClientAuthService clientAuthService) {
         this.fxWeaver = fxWeaver;
-        this.authService = authService;
+        this.clientAuthService = clientAuthService;
     }
 
     @FXML
@@ -62,11 +62,11 @@ public class AuthController {
         String username = loginUserName.getText();
         String password = PasswordField.getText();
 
-        authService.userLogin(username, password);
+        clientAuthService.userLogin(username, password);
 
-        while (!authService.isLoginConfirm() || !authService.isLoginDecline()) {
-            if (authService.isLoginConfirm()) {
-                Optional<String> userPath = authService.findUserFolderPath();
+        while (!clientAuthService.isLoginConfirm() || !clientAuthService.isLoginDecline()) {
+            if (clientAuthService.isLoginConfirm()) {
+                Optional<String> userPath = clientAuthService.findUserFolderPath();
 
                 if(userPath.isPresent()) {
                     //если у юзера есть своя папка на устройстве -> переходим в папку
@@ -79,7 +79,7 @@ public class AuthController {
                 }
             }
 
-            if(authService.isLoginDecline()) {
+            if(clientAuthService.isLoginDecline()) {
                 //выводим лэйбл о том что неудачный вход
                 fxWeaver.loadController(AuthController.class).show();
                 break;
@@ -100,7 +100,7 @@ public class AuthController {
     }
 
     public void show() {
-        authService.resetFlags();
+        clientAuthService.resetFlags();
         this.stage = new Stage();
         stage.setScene(new Scene(mainDialog));
         stage.setMinWidth(650);

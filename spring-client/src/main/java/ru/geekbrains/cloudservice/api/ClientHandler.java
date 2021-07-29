@@ -25,6 +25,19 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message> {
     private ChannelHandlerContext channelHandlerContext;
 
     @Override
+    protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
+        ResponseMessage responseMessage = (ResponseMessage) msg;
+        Response response = responseMessage.getResponse();
+        if (response instanceof AuthResponse) {
+            authResponseHandler.processHandler(responseMessage);
+        }
+
+        if (response instanceof FileOperationResponse) {
+            filesOperationResponseHandler.processHandler(responseMessage);
+        }
+    }
+
+    @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         super.channelRegistered(ctx);
         log.info("Clienthandler registered {}", ctx);
@@ -50,22 +63,8 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message> {
     }
 
     public void sendRequestToServer(Message requestMessage) {
-//        channelHandlerContext.writeAndFlush(requestMessage);
         channelHandlerContext.writeAndFlush(requestMessage);
-
         log.info("sent {}", requestMessage);
-    }
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
-        ResponseMessage responseMessage = (ResponseMessage) msg;
-        Response response = responseMessage.getResponse();
-        if (response instanceof AuthResponse) {
-            authResponseHandler.processHandler(responseMessage);
-        }
-
-        if (response instanceof FileOperationResponse) {
-            filesOperationResponseHandler.processHandler(responseMessage);
-        }
     }
 
     public ChannelHandlerContext getChannelHandlerContext() {

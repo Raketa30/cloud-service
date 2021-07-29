@@ -14,7 +14,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.geekbrains.cloudservice.service.AuthService;
+import ru.geekbrains.cloudservice.service.ClientAuthService;
 
 import java.io.File;
 import java.net.URL;
@@ -24,7 +24,7 @@ import java.util.ResourceBundle;
 @Component
 @FxmlView("register.fxml")
 public class RegistrationController {
-    private final AuthService authService;
+    private final ClientAuthService clientAuthService;
 
     private FxWeaver fxWeaver;
 
@@ -34,8 +34,8 @@ public class RegistrationController {
     private Stage stage;
 
     @Autowired
-    public RegistrationController(AuthService authService, FxWeaver fxWeaver) {
-        this.authService = authService;
+    public RegistrationController(ClientAuthService clientAuthService, FxWeaver fxWeaver) {
+        this.clientAuthService = clientAuthService;
         this.fxWeaver = fxWeaver;
     }
 
@@ -84,17 +84,17 @@ public class RegistrationController {
         String passwordRepeat = passwordRepeatField.getText();
 
         if (validateCredentials(username, password, passwordRepeat)) {
-            authService.registerUser(username, password);
-            authService.setUserFolderPath(folderPath.getText());
+            clientAuthService.registerUser(username, password);
+            clientAuthService.setUserFolderPath(folderPath.getText());
 
-            while (authService.isRegistrationConfirm() || authService.isRegistrationDecline()) {
-                if (authService.isRegistrationConfirm()) {
+            while (clientAuthService.isRegistrationConfirm() || clientAuthService.isRegistrationDecline()) {
+                if (clientAuthService.isRegistrationConfirm()) {
                     log.info("userpath setted{}", folderPath.getText());
                     fxWeaver.loadController(AuthController.class).show();
                     break;
                 }
 
-                if (authService.isRegistrationDecline()) {
+                if (clientAuthService.isRegistrationDecline()) {
                     break;
                 }
             }

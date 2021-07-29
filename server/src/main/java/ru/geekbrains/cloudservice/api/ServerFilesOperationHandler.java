@@ -36,6 +36,10 @@ public class ServerFilesOperationHandler {
 
             FileOperationRequestType fileOperationRequestType = (FileOperationRequestType) requestMessage.getRequest().getRequestCommandType();
             switch (fileOperationRequestType) {
+                case FILES_LIST:
+                    fileServerService.getFileInfoListForView(requestMessage, ctx);
+                    break;
+
                 case SAVE_FILE_REQUEST:
                     FileInfo fileInfo = (FileInfo) requestMessage.getAbstractMessageObject();
                     ctx.channel().writeAndFlush(fileServerService.checkReceivedFileInfo(fileInfo));
@@ -43,10 +47,6 @@ public class ServerFilesOperationHandler {
 
                 case SAVE_FILE:
                     fileServerService.saveFile(requestMessage, ctx);
-                    break;
-
-                case SAVE_FILES_LIST_REQUEST:
-                    fileServerService.saveFileList(requestMessage);
                     break;
 
                 case DOWNLOAD_FILE:

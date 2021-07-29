@@ -3,7 +3,7 @@ package ru.geekbrains.cloudservice.service;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.api.FilesHandler;
+import ru.geekbrains.cloudservice.api.ServerFileHandler;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
@@ -29,11 +29,6 @@ public class FileServerService {
         serverRoot = Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/server/main_root_folder/");
     }
 
-    //создаем папку для пользователя
-    public void createUserRootDirectory(String username) {
-
-    }
-
     public void saveFile(RequestMessage requestMessage, ChannelHandlerContext ctx) {
         FileInfo fileInfo = (FileInfo) requestMessage.getAbstractMessageObject();
         Path fullPath = serverRoot
@@ -41,13 +36,13 @@ public class FileServerService {
                 .resolve(fileInfo.getFilePath());
 
 
-        FilesHandler filesHandler =  new FilesHandler(fullPath, fileInfo);
+        ServerFileHandler serverFileHandler =  new ServerFileHandler(fullPath, fileInfo);
         ChannelPipeline pipeline = ctx.pipeline()
-                .addBefore("od", "fh", filesHandler);
+                .addBefore("od", "fh", serverFileHandler);
         log.info(pipeline.toString());
         try {
-            filesHandler.channelRegistered(ctx);
-            filesHandler.channelActive(ctx);
+            serverFileHandler.channelRegistered(ctx);
+            serverFileHandler.channelActive(ctx);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -78,5 +73,15 @@ public class FileServerService {
 
     public void setActiveUser(User activeUser) {
         this.activeUser = activeUser;
+    }
+
+
+    //метод возвращающий список файлов по указанной ссылке
+    public void getFileInfoListForView(RequestMessage requestMessage, ChannelHandlerContext ctx) {
+        //подразумевается что сюда прилетает папка родитель
+        FileInfo fileInfo = (FileInfo) requestMessage.getAbstractMessageObject();
+        String filePath = fileInfo.getFilePath();
+
+        Optional<List<FileInfo>> optionalFileInfos = userOperationalPathsRepo.findFilesByParentPath(filePath);
     }
 }

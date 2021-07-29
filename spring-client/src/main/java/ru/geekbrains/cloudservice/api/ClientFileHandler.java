@@ -4,9 +4,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
-import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
 import ru.geekbrains.cloudservice.model.FileInfo;
 
 import java.io.File;
@@ -17,11 +14,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Slf4j
-public class FilesHandler extends ChunkedWriteHandler {
+public class ClientFileHandler extends ChunkedWriteHandler {
     private final Path filePath;
     private final FileInfo fileInfo;
 
-    public FilesHandler(Path filePath, FileInfo fileInfo) {
+    public ClientFileHandler(Path filePath, FileInfo fileInfo) {
         this.filePath = filePath;
         this.fileInfo = fileInfo;
     }
@@ -56,13 +53,13 @@ public class FilesHandler extends ChunkedWriteHandler {
             }
 
             if (Files.size(filePath) == fileInfo.getSize()) {
-                ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_SAVED), fileInfo));
+                log.warn("file received from server {}", fileInfo);
                 ctx.pipeline().remove(this);
             }
 
         } catch (Exception e) {
             log.warn("Filehandler exception");
-            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_SAVING_PROBLEM), fileInfo));
+            log.warn("Problem with file receiving");
             Files.delete(filePath);
             ctx.pipeline().remove(this);
         }
@@ -77,11 +74,4 @@ public class FilesHandler extends ChunkedWriteHandler {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelInactive();
     }
-
-//    @Override
-//    public void channelReadComplete(ChannelHandlerContext ctx) {
-//        ctx.pipeline().remove(this);
-//        System.out.println("channel read complete");
-//        log.warn(ctx.pipeline().toString());
-//    }
 }

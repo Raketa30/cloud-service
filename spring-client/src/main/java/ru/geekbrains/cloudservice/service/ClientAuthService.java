@@ -23,7 +23,7 @@ import java.util.Scanner;
 
 @Slf4j
 @Service
-public class AuthService {
+public class ClientAuthService {
     @Autowired
     private ClientHandler clientHandler;
 
@@ -36,7 +36,7 @@ public class AuthService {
     private volatile boolean registrationConfirm;
     private volatile boolean registrationDecline;
 
-    public AuthService() {
+    public ClientAuthService() {
         this.loginConfirm = false;
         this.loginDecline = false;
 

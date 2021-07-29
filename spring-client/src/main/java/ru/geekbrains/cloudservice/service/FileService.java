@@ -1,6 +1,6 @@
 package ru.geekbrains.cloudservice.service;
 
-import io.netty.handler.stream.ChunkedFile;
+import io.netty.channel.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,8 +12,9 @@ import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
 import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.model.LocalFileInfo;
 
-import java.io.File;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 @Slf4j
 @Service
@@ -36,13 +37,34 @@ public class FileService {
     public void sendFileToServer(FileInfo responseBody) {
         Path filePath = authService.getUserFolderPath().resolve(responseBody.getFilePath());
         try {
-            ChunkedFile chunkedFile = new ChunkedFile(new File(filePath.toString()));
-            clientHandler.getChannelHandlerContext().writeAndFlush(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
-            clientHandler.getChannelHandlerContext().writeAndFlush(chunkedFile);
+            ChannelHandlerContext context = clientHandler.getChannelHandlerContext();
+            context.write(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
+
+            ChannelFuture sendFileFuture;
+            sendFileFuture = context.writeAndFlush(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()),
+            context.newProgressivePromise());
+            // Write the end marker.
+
+            sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
+                @Override
+                public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
+                    if (total < 0) { // total unknown
+                        log.debug(future.channel() + " Transfer progress: " + progress);
+                    } else {
+                        log.debug(future.channel() + " Transfer progress: " + progress + " / " + total);
+                    }
+                }
+
+                @Override
+                public void operationComplete(ChannelProgressiveFuture future) {
+                    log.debug(future.channel() + " Transfer complete.");
+                    context.fireChannelActive();
+                }
+
+                });
+
         } catch (Exception e) {
-            log.warn("file not found");
+            e.printStackTrace();
         }
-
-
     }
 }

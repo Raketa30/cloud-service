@@ -11,7 +11,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
-import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,13 +39,13 @@ public class NettyConnector {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
                 ch.pipeline()
-                        .addLast("objectEncoder", new ObjectEncoder())
-                        .addLast("objectDecoder", new ObjectDecoder(50 * 1024 * 1024, ClassResolvers.cacheDisabled(null)))
-                        .addLast("chunkedWriteHandler", new ChunkedWriteHandler())
-                        .addLast("authHandler", clientHandler);
+                        .addLast("oe", new ObjectEncoder())
+
+                        .addLast("od", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)))
+//                        .addLast("cw", new ChunkedWriteHandler())
+                        .addLast("2", clientHandler);
             }
         });
-
         try {
             ChannelFuture channelFuture = bootstrapClient.connect(host, port).sync();
             channelFuture.channel().closeFuture().sync();

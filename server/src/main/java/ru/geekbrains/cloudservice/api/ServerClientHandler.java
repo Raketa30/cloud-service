@@ -1,6 +1,5 @@
 package ru.geekbrains.cloudservice.api;
 
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +11,6 @@ import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
 import ru.geekbrains.cloudservice.service.AuthServerService;
 
 @Slf4j
-@ChannelHandler.Sharable
 public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
     private final ServerAuthHandler serverAuthHandler;
     private ServerFilesOperationHandler serverFilesOperationHandler;

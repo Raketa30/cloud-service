@@ -33,12 +33,13 @@ public class ServerAuthHandler {
                 Optional<User> optionalUser = authServerService.loginRequest(tempUser);
                 if (optionalUser.isPresent()) {
                     User user = optionalUser.get();
-                    ctx.writeAndFlush(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_OK), new UserTo(user.getUsername())));
+                    ctx.write(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_OK), new UserTo(user.getUsername())));
+                    ctx.flush();
                     activeUser = user;
                     log.info("user {} successfully logged", user);
                     break;
                 }
-                ctx.channel().writeAndFlush(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));
+                ctx.writeAndFlush(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));
                 log.info("wrong login attempt");
                 break;
 

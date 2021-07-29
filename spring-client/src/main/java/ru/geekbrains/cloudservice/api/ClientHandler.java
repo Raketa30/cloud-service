@@ -1,6 +1,5 @@
 package ru.geekbrains.cloudservice.api;
 
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +13,7 @@ import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 
 @Slf4j
 @Controller
+//@ChannelHandler.Sharable
 public class ClientHandler extends SimpleChannelInboundHandler<Message> {
 
     @Autowired
@@ -51,7 +51,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message> {
 
     public void sendRequestToServer(Message requestMessage) {
 //        channelHandlerContext.writeAndFlush(requestMessage);
-        channelHandlerContext.writeAndFlush(requestMessage).addListener((ChannelFutureListener) future -> log.info("channel future op complete"));
+        channelHandlerContext.writeAndFlush(requestMessage);
 
         log.info("sent {}", requestMessage);
     }

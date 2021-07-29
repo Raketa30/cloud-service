@@ -11,7 +11,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
-import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.service.AuthServerService;
 import ru.geekbrains.cloudservice.util.MyLogger;
@@ -37,10 +36,10 @@ public class NettyServer {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             socketChannel.pipeline()
-                                    .addLast("objectEncoder", new ObjectEncoder())
-                                    .addLast("objectDecoder", new ObjectDecoder(50 * 1024 * 1024, ClassResolvers.cacheDisabled(null)))
-                                    .addLast("chunkedWriteHandler", new ChunkedWriteHandler())
-                                    .addLast("clientHandler", new ServerClientHandler(authServerService));
+                                    .addLast("oe", new ObjectEncoder())
+
+                                    .addLast("od", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)))
+                                    .addLast("2", new ServerClientHandler(authServerService));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)

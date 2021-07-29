@@ -15,7 +15,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-public class LocalFileInfo extends AbstractMessage{
+public class LocalFileInfo extends AbstractMessage {
     private Path path;
     private Path relativePath;
     private String filename;

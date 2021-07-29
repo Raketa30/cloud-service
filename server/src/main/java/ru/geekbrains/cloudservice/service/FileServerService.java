@@ -1,8 +1,9 @@
 package ru.geekbrains.cloudservice.service;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import lombok.extern.slf4j.Slf4j;
+import ru.geekbrains.cloudservice.api.FilesHandler;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
@@ -11,12 +12,6 @@ import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -26,11 +21,12 @@ import java.util.Optional;
 @Slf4j
 public class FileServerService {
     private User activeUser;
-    private UserOperationalPathsRepo userOperationalPathsRepo;
+    private final UserOperationalPathsRepo userOperationalPathsRepo;
+    private final Path serverRoot;
 
     public FileServerService() {
-
         this.userOperationalPathsRepo = new UserOperationalPathsRepo();
+        serverRoot = Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/server/main_root_folder/");
     }
 
     //создаем папку для пользователя
@@ -40,29 +36,22 @@ public class FileServerService {
 
     public void saveFile(RequestMessage requestMessage, ChannelHandlerContext ctx) {
         FileInfo fileInfo = (FileInfo) requestMessage.getAbstractMessageObject();
-        Path fullPath = Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/server/main_root_folder/" +
-                activeUser.getServerRootPath()).resolve(fileInfo.getFilePath());
+        Path fullPath = serverRoot
+                .resolve(activeUser.getServerRootPath())
+                .resolve(fileInfo.getFilePath());
+
+
+        FilesHandler filesHandler =  new FilesHandler(fullPath, fileInfo);
+        ChannelPipeline pipeline = ctx.pipeline()
+                .addBefore("od", "fh", filesHandler);
+        log.info(pipeline.toString());
         try {
-            File file = fullPath.toFile();
-            if (!Files.exists(fullPath)) {
-                file.createNewFile();
-            }
-            ByteBuf in = ctx.alloc().buffer();
-            ByteBuffer nioBuffer = in.nioBuffer();
-            FileOutputStream fos = new FileOutputStream(file);
-            FileChannel channel = fos.getChannel();
-            while (nioBuffer.hasRemaining()) {
-                channel.write(nioBuffer);
-            }
-            channel.close();
-            fos.close();
-            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_SAVED), fileInfo));
-        } catch (IOException e) {
+            filesHandler.channelRegistered(ctx);
+            filesHandler.channelActive(ctx);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-        ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_SAVING_PROBLEM), fileInfo));
-
+        System.out.println(pipeline);
     }
 
     public void saveFileList(RequestMessage requestMessage) {

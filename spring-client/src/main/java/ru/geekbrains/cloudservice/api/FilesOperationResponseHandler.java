@@ -5,7 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
-import ru.geekbrains.cloudservice.model.FileInfo;
+import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.model.FilesList;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
 import ru.geekbrains.cloudservice.service.ClientFileService;
 
@@ -26,17 +27,22 @@ public class FilesOperationResponseHandler {
 
         switch (fileOperationRequestType) {
             case FILE_READY_TO_SAVE:
-                FileInfo responseBody = (FileInfo) responseMessage.getAbstractMessageObject();
+                FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
                 clientFileService.sendFileToServer(responseBody);
                 break;
             case FILE_ALREADY_EXIST:
-                FileInfo fileInfo = (FileInfo) responseMessage.getAbstractMessageObject();
-                log.debug("File allraedy exist {}",fileInfo);
-                break;
-            case FILE_SENT:
+                FileInfoTo fileInfoTo = (FileInfoTo) responseMessage.getAbstractMessageObject();
+                log.debug("File allraedy exist {}", fileInfoTo);
                 break;
             case FILE_LIST_SENT:
+                FilesList listInfo = (FilesList) responseMessage.getAbstractMessageObject();
+                clientFileService.addFileListToView(listInfo);
                 break;
+
+            case EMPTY_LIST:
+                clientFileService.addLocalFilesToView();
+                break;
+
             case FILE_NOT_EXIST:
                 break;
             case DIRECTORY_NOT_EXIST:

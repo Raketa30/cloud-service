@@ -18,20 +18,21 @@ public class UserDBConnection {
     }
 
     public Optional<User> findUserByUsernameAndPassword(User user) {
-        try {
-            Session session = sessionFactory.openSession();
+
+        User result;
+        try (Session session = sessionFactory.openSession()) {
             session.get(User.class, 1L);
 
             Query query = session.createQuery("from User as u where u.username = :username and u.password = :password");
             query.setParameter("username", user.getUsername());
             query.setParameter("password", user.getPassword());
 
-            User result = (User) query.getSingleResult();
-            session.close();
-            System.out.println(result);
+            result = (User) query.getSingleResult();
+
+            log.debug(result.toString());
             return Optional.of(result);
         } catch (Exception e) {
-            log.info("find userByUsernameAndPassword ex");
+            log.warn("find userByUsernameAndPassword ex");
         }
 
         return Optional.empty();
@@ -39,28 +40,30 @@ public class UserDBConnection {
     }
 
     public Optional<User> findUserByUsername(String username) {
-        try {
-            Session session = sessionFactory.openSession();
+        Optional<User> optionalUser;
+        try (Session session = sessionFactory.openSession()) {
             session.get(User.class, 1L);
 
             Query query = session.createQuery("from User as u where u.username = :username");
             query.setParameter("username", username);
 
-            Optional<User> optionalUser = Optional.of((User) query.getSingleResult());
-            session.close();
+            optionalUser = Optional.of((User) query.getSingleResult());
             return optionalUser;
         } catch (Exception e) {
-            log.info("find userByUsername excp");
+            log.warn("find userByUsername exception {}", e.getMessage());
         }
 
         return Optional.empty();
     }
 
     public void registerNewUser(User user) {
-        Session session = sessionFactory.openSession();
-        session.get(User.class, 1L);
-        Transaction tx = session.beginTransaction();
-        session.save(user);
-        tx.commit();
+        Transaction tx;
+        try (Session session = sessionFactory.openSession()) {
+            session.get(User.class, 1L);
+            tx = session.beginTransaction();
+            session.save(user);
+            log.debug("user saved : {}", user);
+            tx.commit();
+        }
     }
 }

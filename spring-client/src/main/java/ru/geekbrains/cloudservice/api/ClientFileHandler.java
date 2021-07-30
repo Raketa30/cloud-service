@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.model.FileInfo;
+import ru.geekbrains.cloudservice.dto.FileInfoTo;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -16,11 +16,11 @@ import java.nio.file.Path;
 @Slf4j
 public class ClientFileHandler extends ChunkedWriteHandler {
     private final Path filePath;
-    private final FileInfo fileInfo;
+    private final FileInfoTo fileInfoTo;
 
-    public ClientFileHandler(Path filePath, FileInfo fileInfo) {
+    public ClientFileHandler(Path filePath, FileInfoTo fileInfoTo) {
         this.filePath = filePath;
-        this.fileInfo = fileInfo;
+        this.fileInfoTo = fileInfoTo;
     }
 
     @Override
@@ -52,8 +52,8 @@ public class ClientFileHandler extends ChunkedWriteHandler {
                 fileChannel.close();
             }
 
-            if (Files.size(filePath) == fileInfo.getSize()) {
-                log.warn("file received from server {}", fileInfo);
+            if (Files.size(filePath) == fileInfoTo.getSize()) {
+                log.warn("file received from server {}", fileInfoTo);
                 ctx.pipeline().remove(this);
             }
 

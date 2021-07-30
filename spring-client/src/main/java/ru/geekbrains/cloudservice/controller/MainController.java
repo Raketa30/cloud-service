@@ -17,7 +17,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.geekbrains.cloudservice.model.LocalFileInfo;
+import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
 import ru.geekbrains.cloudservice.service.ClientFileService;
 
@@ -51,9 +51,9 @@ public class MainController {
     private Stage stage;
 
     @FXML
-    public TableColumn<LocalFileInfo, String> downloadColumn;
+    public TableColumn<FileInfo, String> downloadColumn;
     @FXML
-    private TableView<LocalFileInfo> filesList;
+    private TableView<FileInfo> filesList;
 
     @FXML
     private ResourceBundle resources;
@@ -67,21 +67,21 @@ public class MainController {
     @FXML
     private JFXButton folderUpButton;
     @FXML
-    private TableColumn<LocalFileInfo, Long> fileSizeColumn;
+    private TableColumn<FileInfo, Long> fileSizeColumn;
     @FXML
-    private TableColumn<LocalFileInfo, String> fileNameColumn;
+    private TableColumn<FileInfo, String> fileNameColumn;
 
     @FXML
-    private TableColumn<LocalFileInfo, String> fileTypeColumn;
+    private TableColumn<FileInfo, String> fileTypeColumn;
 
     @FXML
-    private TableColumn<LocalFileInfo, String> uploadColumn;
+    private TableColumn<FileInfo, String> uploadColumn;
 
     @FXML
-    private TableColumn<LocalFileInfo, String> onAirColumn;
+    private TableColumn<FileInfo, String> onAirColumn;
 
     @FXML
-    private TableColumn<LocalFileInfo, String> fileLastModifiedColumn;
+    private TableColumn<FileInfo, String> fileLastModifiedColumn;
     @FXML
     private JFXListView<String> rootFoldersList;
 
@@ -151,9 +151,9 @@ public class MainController {
                         setGraphic(button);
 
                         button.setOnMouseClicked(event -> {
-                            LocalFileInfo localFileInfo = getTableView().getItems().get(getIndex());
-                            localFileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(localFileInfo.getPath()));
-                            clientFileService.sendRequestForFileSaving(localFileInfo);
+                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
+                            clientFileService.sendRequestForFileSaving(fileInfo);
                         });
                     }
                 }
@@ -188,15 +188,15 @@ public class MainController {
 
         try {
             rootFoldersList.getItems().addAll(Files.list(clientAuthService.getUserFolderPath())
-                    .filter(path -> new LocalFileInfo(path).getFileType().equals("folder"))
-                    .map(s -> new LocalFileInfo(s).getFilename())
+                    .filter(path -> new FileInfo(path).getFileType().equals("folder"))
+                    .map(s -> new FileInfo(s).getFilename())
                     .collect(Collectors.toList())
             );
 
         } catch (IOException e) {
             log.warn("Нен удалось отобразить список папок в рутовом каталоге");
         }
-        //gtht[jlbv d gfgrb bp henjdjuj rfnfkjuf
+        //переходим в папки из рутового каталога
         rootFoldersList.setOnMouseClicked(mouseEvent -> {
             currentPath = clientAuthService.getUserFolderPath().resolve(getSelectedFolder());
             updateList(currentPath);
@@ -223,7 +223,8 @@ public class MainController {
         try {
             pathField.setText("/" + relativizedPath.normalize().toString());
 
-            clientFileService.receiveFilesInfoList();
+            clientFileService.receiveFilesInfoList(path);
+            clientFileService.addLocalFilesToView(path);
 
             filesList.getItems().clear();
             filesList.getItems().addAll(

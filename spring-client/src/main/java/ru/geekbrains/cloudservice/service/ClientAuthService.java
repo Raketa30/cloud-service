@@ -119,6 +119,7 @@ public class ClientAuthService {
                 String[] credentials = line.split(" : ");
 
                 if (credentials[0].equals(userTo.getUsername())) {
+                    setUserFolderPath(credentials[1]);
                     return Optional.of(credentials[1]);
                 }
             }
@@ -129,10 +130,10 @@ public class ClientAuthService {
     }
 
     //создаем папку пользователя при успешной регистрации
-    public void createLocalUserDirectory(String userDirectory) {
-        String path = userDirectory + "/GeekbrainsCloud-" + userTo.getUsername();
+    public void createLocalUserDirectory(String pickedDirectory) {
+        String path = pickedDirectory + "/GeekbrainsCloud-" + userTo.getUsername();
         if (Files.exists(Paths.get(path))) {
-            setUserFolderPath(userDirectory + "/" + userTo.getUsername());
+            setUserFolderPath(pickedDirectory + "/" + userTo.getUsername());
             return;
         }
 

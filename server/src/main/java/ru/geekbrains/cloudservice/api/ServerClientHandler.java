@@ -51,4 +51,8 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
         }
     }
 
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        log.warn(cause.getMessage());
+    }
 }

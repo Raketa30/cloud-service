@@ -16,5 +16,6 @@
     <!-- <property name="hibernate.hbm2ddl.auto">update</property> -->
 
     <mapping class="ru.geekbrains.cloudservice.model.User" />
+    <mapping class="ru.geekbrains.cloudservice.dto.FileInfoTo" />
   </session-factory>
 </hibernate-configuration>

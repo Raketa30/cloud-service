@@ -7,7 +7,6 @@ public enum FilesOperationResponseType implements CommandType {
     FILE_READY_TO_SAVE,
 
     FILE_SAVED,
-    FILES_LIST_SAVED,
 
     FILE_SENT,
     FILE_LIST_SENT,
@@ -15,5 +14,6 @@ public enum FilesOperationResponseType implements CommandType {
     FILE_NOT_EXIST,
     DIRECTORY_NOT_EXIST,
 
-    FILE_SAVING_PROBLEM;
+    FILE_SAVING_PROBLEM,
+    EMPTY_LIST;
 }

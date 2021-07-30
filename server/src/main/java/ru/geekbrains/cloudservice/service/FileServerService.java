@@ -8,13 +8,13 @@ import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
-import ru.geekbrains.cloudservice.model.FileInfo;
+import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.model.FilesList;
 import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,13 +30,15 @@ public class FileServerService {
     }
 
     public void saveFile(RequestMessage requestMessage, ChannelHandlerContext ctx) {
-        FileInfo fileInfo = (FileInfo) requestMessage.getAbstractMessageObject();
+        FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
+        fileInfoTo.setUserId(activeUser.getId());
+        Path path = Paths.get(fileInfoTo.getFilePath()).getParent();
+
         Path fullPath = serverRoot
                 .resolve(activeUser.getServerRootPath())
-                .resolve(fileInfo.getFilePath());
+                .resolve(fileInfoTo.getFilePath());
 
-
-        ServerFileHandler serverFileHandler =  new ServerFileHandler(fullPath, fileInfo);
+        ServerFileHandler serverFileHandler =  new ServerFileHandler(fullPath, fileInfoTo, userOperationalPathsRepo);
         ChannelPipeline pipeline = ctx.pipeline()
                 .addBefore("od", "fh", serverFileHandler);
         log.info(pipeline.toString());
@@ -44,31 +46,19 @@ public class FileServerService {
             serverFileHandler.channelRegistered(ctx);
             serverFileHandler.channelActive(ctx);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.debug("serverFileHandler register error: {}", e.getMessage());
         }
-        System.out.println(pipeline);
+        log.debug(pipeline.toString());
     }
 
-    public void saveFileList(RequestMessage requestMessage) {
-    }
-
-    public FileInfo getFile(RequestMessage requestMessage) {
-        return null;
-    }
-
-    public List<FileInfo> getFileList(RequestMessage requestMessage) {
-        List<FileInfo> localFileInfoList = new ArrayList<>();
-        return localFileInfoList;
-    }
-
-    public ResponseMessage checkReceivedFileInfo(FileInfo fileInfo) {
-        Path fullPath = Paths.get(activeUser.getServerRootPath()).resolve(fileInfo.getFilePath());
-        Optional<FileInfo> fileInfoFromDataBase = userOperationalPathsRepo.findFileInfoByRelativePath(fileInfo.getFilePath());
+    public ResponseMessage checkReceivedFileInfo(FileInfoTo fileInfoTo) {
+        Path fullPath = Paths.get(activeUser.getServerRootPath()).resolve(fileInfoTo.getFilePath());
+        Optional<FileInfoTo> fileInfoFromDataBase = userOperationalPathsRepo.findFileInfoByRelativePath(fileInfoTo.getFilePath());
         if (fileInfoFromDataBase.isPresent()) {
             //такой файл существует
-            return new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_ALREADY_EXIST), fileInfo);
+            return new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo);
         }
-        return new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_READY_TO_SAVE), fileInfo);
+        return new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_READY_TO_SAVE), fileInfoTo);
     }
 
     public void setActiveUser(User activeUser) {
@@ -79,9 +69,16 @@ public class FileServerService {
     //метод возвращающий список файлов по указанной ссылке
     public void getFileInfoListForView(RequestMessage requestMessage, ChannelHandlerContext ctx) {
         //подразумевается что сюда прилетает папка родитель
-        FileInfo fileInfo = (FileInfo) requestMessage.getAbstractMessageObject();
-        String filePath = fileInfo.getFilePath();
+        FilesList filesList = (FilesList) requestMessage.getAbstractMessageObject();
+        String parentPath = filesList.getParentPath();
 
-        Optional<List<FileInfo>> optionalFileInfos = userOperationalPathsRepo.findFilesByParentPath(filePath);
+        Optional<List<FileInfoTo>> optionalFileInfos = userOperationalPathsRepo.findFilesByParentPath(parentPath);
+
+        if(optionalFileInfos.isPresent()) {
+            filesList.setFileInfoTos(optionalFileInfos.get());
+            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_LIST_SENT), filesList));
+        } else {
+            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.EMPTY_LIST)));
+        }
     }
 }

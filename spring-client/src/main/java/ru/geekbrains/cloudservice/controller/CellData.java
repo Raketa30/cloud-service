@@ -7,7 +7,7 @@ import java.util.Arrays;
 public enum CellData {
 
     HIGH("yes", Color.GREEN),
-    MEDIUM("medium", Color.YELLOW),
+    MEDIUM("air", Color.YELLOW),
     NONE("not", Color.BLUEVIOLET);
 
     private String data;

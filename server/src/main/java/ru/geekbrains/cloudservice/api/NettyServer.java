@@ -17,7 +17,7 @@ import ru.geekbrains.cloudservice.util.MyLogger;
 
 @Slf4j
 public class NettyServer {
-    private int port;
+    private final int port;
 
     public NettyServer(int port) {
         this.port = port;
@@ -36,8 +36,9 @@ public class NettyServer {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             socketChannel.pipeline()
+                                    //out
                                     .addLast("oe", new ObjectEncoder())
-
+                                    //In
                                     .addLast("od", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)))
                                     .addLast("2", new ServerClientHandler(authServerService));
                         }
@@ -51,7 +52,7 @@ public class NettyServer {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         } catch (InterruptedException interruptedException) {
-            interruptedException.printStackTrace();
+            log.error("server shutdown: {}", interruptedException.getMessage());
         }
     }
 

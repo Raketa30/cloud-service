@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
+import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
 import ru.geekbrains.cloudservice.model.FilesList;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
@@ -23,7 +23,7 @@ public class FilesOperationResponseHandler {
     }
 
     public void processHandler(ResponseMessage responseMessage) {
-        FilesOperationResponseType fileOperationRequestType = (FilesOperationResponseType) responseMessage.getResponse().getResponseType();
+        FileOperationResponseType fileOperationRequestType = (FileOperationResponseType) responseMessage.getResponse().getResponseType();
 
         switch (fileOperationRequestType) {
             case FILE_READY_TO_SAVE:

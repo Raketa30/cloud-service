@@ -10,18 +10,13 @@ import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
 import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.service.FileServerService;
+
 @Slf4j
 public class ServerFilesOperationHandler {
     private final FileServerService fileServerService;
-    private User activeUser;
 
     public ServerFilesOperationHandler() {
         fileServerService = new FileServerService();
-    }
-
-    public void setActiveUser(User activeUser) {
-        this.activeUser = activeUser;
-        fileServerService.setActiveUser(activeUser);
     }
 
     public void processRequest(RequestMessage requestMessage, ChannelHandlerContext ctx, User activeUser) {
@@ -29,10 +24,9 @@ public class ServerFilesOperationHandler {
         if(activeUser == null) {
             ctx.channel().writeAndFlush(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));
         } else {
-            this.activeUser = activeUser;
             fileServerService.setActiveUser(activeUser);
-
             FileOperationRequestType fileOperationRequestType = (FileOperationRequestType) requestMessage.getRequest().getRequestCommandType();
+
             switch (fileOperationRequestType) {
                 case FILES_LIST:
                     fileServerService.getFileInfoListForView(requestMessage, ctx);
@@ -54,6 +48,5 @@ public class ServerFilesOperationHandler {
                     break;
             }
         }
-
     }
 }

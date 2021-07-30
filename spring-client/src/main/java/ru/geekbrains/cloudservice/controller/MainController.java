@@ -66,8 +66,10 @@ public class MainController {
 
     @FXML
     private JFXButton folderUpButton;
+
     @FXML
     private TableColumn<FileInfo, Long> fileSizeColumn;
+
     @FXML
     private TableColumn<FileInfo, String> fileNameColumn;
 
@@ -82,6 +84,7 @@ public class MainController {
 
     @FXML
     private TableColumn<FileInfo, String> fileLastModifiedColumn;
+
     @FXML
     private JFXListView<String> rootFoldersList;
 
@@ -147,7 +150,8 @@ public class MainController {
                         button.setText("▲");
                         button.setStyle("-fx-background-color: #0C0878; " +
                                 "-fx-border-color: aliceblue;  " +
-                                "-fx-text-fill: aliceblue");
+                                "-fx-text-fill: aliceblue; " +
+                                "-fx-border-radius: 50%;");
                         setGraphic(button);
 
                         button.setOnMouseClicked(event -> {
@@ -175,7 +179,8 @@ public class MainController {
                         button.setText("▼");
                         button.setStyle("-fx-background-color: green; " +
                                 "-fx-border-color: aliceblue; " +
-                                "-fx-text-fill: aliceblue");
+                                "-fx-text-fill: aliceblue;" +
+                                "-fx-border-radius: 50%;");
                         setGraphic(button);
                     }
                 }
@@ -223,21 +228,19 @@ public class MainController {
         try {
             pathField.setText("/" + relativizedPath.normalize().toString());
 
-            clientFileService.receiveFilesInfoList(path);
+            clientFileService.receiveFilesInfoList(relativizedPath);
             clientFileService.addLocalFilesToView(path);
 
             filesList.getItems().clear();
-            filesList.getItems().addAll(
-                    clientFileService.getFileInfoSet()
-//                    Files.list(path)
-//                            .map(LocalFileInfo::new)
-//                            .collect(Collectors.toList())
-            );
+            if (!clientFileService.getFileInfoSet().isEmpty()) {
+                filesList.getItems().addAll(
+                        clientFileService.getFileInfoSet()
+                );
+            }
             filesList.sort();
         } catch (Exception e) {
-            new Alert(Alert.AlertType.WARNING, "Не удалось отобразить список файлов", ButtonType.OK);
+            log.warn("updateList ex {}:", e.getMessage());
         }
-
     }
 
     public void btnPathUpAction(ActionEvent actionEvent) {

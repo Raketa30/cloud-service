@@ -58,8 +58,8 @@ public class FileInfo extends AbstractMessage {
         if (!(o instanceof FileInfo)) return false;
         FileInfo fileInfo = (FileInfo) o;
         return filename.equals(fileInfo.filename) &&
-                fileType == fileInfo.fileType &&
-                fileSize.equals(fileInfo.fileSize);
+                        fileType.equals(fileInfo.fileType) &&
+                        fileSize.equals(fileInfo.fileSize);
     }
 
     @Override

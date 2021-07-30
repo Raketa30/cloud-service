@@ -6,7 +6,7 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
-import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
+import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
 import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 
@@ -52,7 +52,6 @@ public class ServerFileHandler extends ChunkedWriteHandler {
             ByteBuffer byteBuffer = byteBuf.nioBuffer();
             try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")) {
                 FileChannel fileChannel = randomAccessFile.getChannel();
-
                 while (byteBuffer.hasRemaining()) {
                     fileChannel.position(file.length());
                     fileChannel.write(byteBuffer);
@@ -64,21 +63,21 @@ public class ServerFileHandler extends ChunkedWriteHandler {
 
             if (Files.size(filePath) == fileInfoTo.getSize()) {
                 userOperationalPathsRepo.saveFileInfo(fileInfoTo);
-                ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_SAVED), fileInfoTo));
                 ctx.pipeline().remove(this);
             }
 
         } catch (Exception e) {
             log.warn("Filehandler exception {}", e.getMessage());
-            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_SAVING_PROBLEM), fileInfoTo));
+            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SAVING_PROBLEM), fileInfoTo));
             Files.delete(filePath);
+            channelInactive(ctx);
             ctx.pipeline().remove(this);
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.info("filehjandler exception");
+        log.info("filehandler exception");
     }
 
     @Override

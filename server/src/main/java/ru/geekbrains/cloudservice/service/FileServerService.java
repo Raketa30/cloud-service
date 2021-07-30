@@ -7,12 +7,14 @@ import ru.geekbrains.cloudservice.api.ServerFileHandler;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
-import ru.geekbrains.cloudservice.commands.files.FilesOperationResponseType;
+import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
 import ru.geekbrains.cloudservice.model.FilesList;
 import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -34,21 +36,44 @@ public class FileServerService {
         fileInfoTo.setUserId(activeUser.getId());
         Path path = Paths.get(fileInfoTo.getFilePath()).getParent();
 
-        Path fullPath = serverRoot
+        Path fullPath = getFullPath(fileInfoTo);
+
+        if(fileInfoTo.getFileType().equals("folder")) {
+            try {
+                Optional<FileInfoTo> fileInfoFromDataBase = userOperationalPathsRepo.findFileInfoByRelativePath(fileInfoTo.getFilePath());
+                if(fileInfoFromDataBase.isPresent()) {
+                    ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo));
+                    if(!Files.exists(fullPath)) {
+                        Files.createDirectory(fullPath);
+                    }
+                } else {
+                    if(!Files.exists(fullPath)) {
+                        Files.createDirectory(fullPath);
+                    }
+                    userOperationalPathsRepo.saveFileInfo(fileInfoTo);
+                }
+            } catch (IOException e) {
+                log.warn("Saving file throw exception {}", e.getMessage());
+            }
+        } else {
+            ServerFileHandler serverFileHandler =  new ServerFileHandler(fullPath, fileInfoTo, userOperationalPathsRepo);
+            ChannelPipeline pipeline = ctx.pipeline()
+                    .addBefore("od", "fh", serverFileHandler);
+            log.info(pipeline.toString());
+            try {
+                serverFileHandler.channelRegistered(ctx);
+                serverFileHandler.channelActive(ctx);
+            } catch (Exception e) {
+                log.debug("serverFileHandler register error: {}", e.getMessage());
+            }
+            log.debug(pipeline.toString());
+        }
+    }
+
+    private Path getFullPath(FileInfoTo fileInfoTo) {
+        return serverRoot
                 .resolve(activeUser.getServerRootPath())
                 .resolve(fileInfoTo.getFilePath());
-
-        ServerFileHandler serverFileHandler =  new ServerFileHandler(fullPath, fileInfoTo, userOperationalPathsRepo);
-        ChannelPipeline pipeline = ctx.pipeline()
-                .addBefore("od", "fh", serverFileHandler);
-        log.info(pipeline.toString());
-        try {
-            serverFileHandler.channelRegistered(ctx);
-            serverFileHandler.channelActive(ctx);
-        } catch (Exception e) {
-            log.debug("serverFileHandler register error: {}", e.getMessage());
-        }
-        log.debug(pipeline.toString());
     }
 
     public ResponseMessage checkReceivedFileInfo(FileInfoTo fileInfoTo) {
@@ -56,15 +81,14 @@ public class FileServerService {
         Optional<FileInfoTo> fileInfoFromDataBase = userOperationalPathsRepo.findFileInfoByRelativePath(fileInfoTo.getFilePath());
         if (fileInfoFromDataBase.isPresent()) {
             //такой файл существует
-            return new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo);
+            return new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo);
         }
-        return new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_READY_TO_SAVE), fileInfoTo);
+        return new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_READY_TO_SAVE), fileInfoTo);
     }
 
     public void setActiveUser(User activeUser) {
         this.activeUser = activeUser;
     }
-
 
     //метод возвращающий список файлов по указанной ссылке
     public void getFileInfoListForView(RequestMessage requestMessage, ChannelHandlerContext ctx) {
@@ -76,9 +100,9 @@ public class FileServerService {
 
         if(optionalFileInfos.isPresent()) {
             filesList.setFileInfoTos(optionalFileInfos.get());
-            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.FILE_LIST_SENT), filesList));
+            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_LIST_SENT), filesList));
         } else {
-            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FilesOperationResponseType.EMPTY_LIST)));
+            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.EMPTY_LIST)));
         }
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.api.ClientHandler;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
+import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
@@ -42,13 +43,8 @@ public class ClientFileService {
 
     public void sendRequestForFileSaving(FileInfo localFileInfo) {
         FileInfoTo fileInfo = getFileInfoTo(localFileInfo);
-        if (fileInfo.getFileType().equals("folder")) {
-            clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FOLDER_REQUEST), fileInfo));
-            log.info("sendRequestForFolderSaving {}", localFileInfo);
-        } else {
             clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
-            log.info("sendRequestForFileSaving {}", localFileInfo);
-        }
+            log.info("sendRequestForFolderSaving {}", localFileInfo);
     }
 
     private FileInfoTo getFileInfoTo(FileInfo localFileInfo) {
@@ -70,7 +66,8 @@ public class ClientFileService {
         return fileInfo;
     }
 
-    public void sendFileToServer(FileInfoTo responseBody) {
+    public void sendFileToServer(ResponseMessage responseMessage) {
+        FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
         Path filePath = getFilePath(responseBody);
         try {
             clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
@@ -80,8 +77,10 @@ public class ClientFileService {
         }
     }
 
-    private void sendFolderToServer(FileInfoTo responseBody) {
+    public void sendDirectoryToServer(ResponseMessage responseMessage) {
+        FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
         Path filePath = getFilePath(responseBody);
+        
         Set<Path> set;
 
         try (Stream<Path> pathStream = Files.walk(filePath, Integer.MAX_VALUE)) {

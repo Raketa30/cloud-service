@@ -24,17 +24,18 @@ public class FilesOperationResponseHandler {
 
         switch (fileOperationRequestType) {
             case FILE_READY_TO_SAVE:
-                FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
-                clientFileService.sendFileToServer(responseBody);
+                clientFileService.sendFileToServer(responseMessage);
+                break;
+
+            case DIRECTORY_READY_TO_SAVE:
+                clientFileService.sendDirectoryToServer(responseMessage);
                 break;
 
             case FILE_ALREADY_EXIST:
                 FileInfoTo fileInfoTo = (FileInfoTo) responseMessage.getAbstractMessageObject();
-                log.debug("File allraedy exist {}", fileInfoTo);
+                log.debug("File already exist {}", fileInfoTo);
                 break;
 
-            case FILE_SAVED:
-                break;
             case FILE_LIST_SENT:
                 FilesList listInfo = (FilesList) responseMessage.getAbstractMessageObject();
                 clientFileService.addFileListToView(listInfo);
@@ -46,6 +47,7 @@ public class FilesOperationResponseHandler {
 
             case FILE_NOT_EXIST:
                 break;
+
             case DIRECTORY_NOT_EXIST:
                 break;
         }

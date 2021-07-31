@@ -5,8 +5,8 @@ import ru.geekbrains.cloudservice.commands.CommandType;
 public enum FileOperationResponseType implements CommandType {
     FILE_ALREADY_EXIST,
     FILE_READY_TO_SAVE,
+    DIRECTORY_READY_TO_SAVE,
 
-    FILE_SAVED,
     FILE_LIST_SENT,
 
     FILE_NOT_EXIST,

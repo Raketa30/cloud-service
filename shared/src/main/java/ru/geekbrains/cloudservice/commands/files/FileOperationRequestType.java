@@ -5,8 +5,12 @@ import ru.geekbrains.cloudservice.commands.CommandType;
 public enum FileOperationRequestType  implements CommandType {
     SAVE_FILE,
     SAVE_FILE_REQUEST,
+
+    SAVE_DIRECTORY,
+
     DOWNLOAD_FILE,
     DOWNLOAD_FILE_LIST,
-    FILES_LIST,
-    SAVE_FOLDER;
+
+    FILES_LIST;
+
 }

@@ -43,7 +43,7 @@ public class ServerFilesOperationHandler {
                     fileServerService.saveFile(requestMessage);
                     break;
 
-                case SAVE_FOLDER:
+                case SAVE_DIRECTORY:
                     fileServerService.saveDirectory(requestMessage);
                     break;
 

@@ -68,6 +68,9 @@ public class FileServerService {
             //такой файл существует
             clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo));
         } else {
+            if(fileInfoTo.getFileType().equals("folder")) {
+
+            }
             clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_READY_TO_SAVE), fileInfoTo));
         }
     }

@@ -39,6 +39,12 @@ public class ServerFileHandler extends ChunkedWriteHandler {
     }
 
     @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ctx.fireChannelReadComplete();
+        log.info("file handler read complete");
+    }
+
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
             File file = filePath.toFile();
@@ -63,6 +69,7 @@ public class ServerFileHandler extends ChunkedWriteHandler {
 
             if (Files.size(filePath) == fileInfoTo.getSize()) {
                 userOperationalPathsRepo.saveFileInfo(fileInfoTo);
+                channelReadComplete(ctx);
                 ctx.pipeline().remove(this);
             }
 

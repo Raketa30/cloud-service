@@ -1,6 +1,5 @@
 package ru.geekbrains.cloudservice.api;
 
-import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
@@ -21,7 +20,7 @@ public class ServerFilesOperationHandler {
         this.serverClientHandler = serverClientHandler;
     }
 
-    public void processRequest(RequestMessage requestMessage, ChannelHandlerContext ctx, User activeUser) {
+    public void processRequest(RequestMessage requestMessage,User activeUser) {
         log.info("received file request {}", requestMessage.getRequest());
         if(activeUser == null) {
             serverClientHandler.sendResponse(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));

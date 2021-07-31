@@ -44,7 +44,6 @@ public class ClientFileService {
     public void sendRequestForFileSaving(FileInfo localFileInfo) {
         FileInfoTo fileInfo = getFileInfoTo(localFileInfo);
             clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
-            log.info("sendRequestForFolderSaving {}", localFileInfo);
     }
 
     private FileInfoTo getFileInfoTo(FileInfo localFileInfo) {
@@ -80,15 +79,23 @@ public class ClientFileService {
     public void sendDirectoryToServer(ResponseMessage responseMessage) {
         FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
         Path filePath = getFilePath(responseBody);
-        
+
+
         Set<Path> set;
 
-        try (Stream<Path> pathStream = Files.walk(filePath, Integer.MAX_VALUE)) {
+        try (Stream<Path> pathStream = Files.walk(filePath, 1)) {
             set = pathStream.collect(Collectors.toSet());
-            set.forEach(p -> {
-                FileInfo fileInfo = new FileInfo(p);
-                sendRequestForFileSaving(fileInfo);
-            });
+            if(set.size() == 1) {
+                FileInfo fileInfo = new FileInfo(filePath);
+                fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(filePath));
+                clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), fileInfo));
+            } else {
+                set.forEach(p -> {
+                    FileInfo fileInfo = new FileInfo(p);
+                    fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(p));
+                    sendRequestForFileSaving(fileInfo);
+                });
+            }
         } catch (IOException e) {
             log.warn("Folder sending problem");
         }

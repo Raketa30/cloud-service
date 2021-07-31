@@ -30,8 +30,8 @@ public class OperationalDBConnection {
 
         } catch (Exception e) {
             log.warn("file not found");
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     public Optional<List<FileInfoTo>> findFilesByParentPath(String parentPath) {
@@ -46,8 +46,8 @@ public class OperationalDBConnection {
 
         } catch (Exception e) {
             log.warn("file not found");
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     public void saveFileInfo(FileInfoTo fileInfoTo) {

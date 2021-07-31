@@ -85,7 +85,7 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
             serverAuthHandler.processRequest(requestMessage, ctx);
         }
         if (request instanceof FileOperationRequest) {
-            serverFilesOperationHandler.processRequest(requestMessage, ctx, serverAuthHandler.getActiveUser());
+            serverFilesOperationHandler.processRequest(requestMessage, serverAuthHandler.getActiveUser());
         }
     }
 

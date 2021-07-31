@@ -33,9 +33,9 @@ public class UserDBConnection {
             return Optional.of(result);
         } catch (Exception e) {
             log.warn("find userByUsernameAndPassword ex");
+            return Optional.empty();
         }
 
-        return Optional.empty();
 
     }
 
@@ -51,9 +51,8 @@ public class UserDBConnection {
             return optionalUser;
         } catch (Exception e) {
             log.warn("find userByUsername exception {}", e.getMessage());
+            return Optional.empty();
         }
-
-        return Optional.empty();
     }
 
     public void registerNewUser(User user) {

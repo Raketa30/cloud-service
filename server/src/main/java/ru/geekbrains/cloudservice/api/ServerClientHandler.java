@@ -27,7 +27,7 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
     private boolean isReady;
 
     public ServerClientHandler(AuthServerService authServerService) {
-        serverAuthHandler = new ServerAuthHandler(authServerService);
+        serverAuthHandler = new ServerAuthHandler(authServerService, this);
         serverFilesOperationHandler = new ServerFilesOperationHandler(this);
     }
 
@@ -73,7 +73,7 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         super.channelUnregistered(ctx);
-        log.info("Serverclienthandler unregistered {}", ctx);
+        log.info("Server client handler unregistered {}", ctx);
     }
 
     @Override
@@ -105,7 +105,7 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
             serverFileHandler.channelRegistered(channelHandlerContext);
             serverFileHandler.channelActive(channelHandlerContext);
         } catch (Exception e) {
-            log.debug("serverFileHandler register error: {}", e.getMessage());
+            log.debug("server File Handler register error: {}", e.getMessage());
         }
         log.debug(pipeline.toString());
     }

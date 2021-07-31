@@ -157,6 +157,7 @@ public class MainController {
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
                             fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
+
                             clientFileService.sendRequestForFileSaving(fileInfo);
                         });
                     }

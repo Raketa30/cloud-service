@@ -1,6 +1,6 @@
 package ru.geekbrains.cloudservice.service;
 
-import io.netty.channel.*;
+import io.netty.channel.DefaultFileRegion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +32,7 @@ public class ClientFileService {
     private final ClientAuthService clientAuthService;
     private final Set<FileInfo> fileInfoSet;
 
+
     @Autowired
     public ClientFileService(ClientHandler clientHandler, ClientAuthService clientAuthService) {
         this.clientHandler = clientHandler;
@@ -41,9 +42,13 @@ public class ClientFileService {
 
     public void sendRequestForFileSaving(FileInfo localFileInfo) {
         FileInfoTo fileInfo = getFileInfoTo(localFileInfo);
-        clientHandler.sendRequestToServer(new RequestMessage(
-                new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
-        log.info("sendRequestForFileSaving {}", localFileInfo);
+        if (fileInfo.getFileType().equals("folder")) {
+            clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FOLDER_REQUEST), fileInfo));
+            log.info("sendRequestForFolderSaving {}", localFileInfo);
+        } else {
+            clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
+            log.info("sendRequestForFileSaving {}", localFileInfo);
+        }
     }
 
     private FileInfoTo getFileInfoTo(FileInfo localFileInfo) {
@@ -56,6 +61,7 @@ public class ClientFileService {
         FileInfoTo fileInfo = new FileInfoTo(fileName, relativePath, fileType, fileSize, dateModified);
 
         Path parentPath = Paths.get(relativePath).getParent();
+
         if (parentPath == null) {
             fileInfo.setParentPath("root");
         } else {
@@ -65,62 +71,39 @@ public class ClientFileService {
     }
 
     public void sendFileToServer(FileInfoTo responseBody) {
-        Path filePath = clientAuthService.getUserFolderPath().resolve(responseBody.getFilePath());
+        Path filePath = getFilePath(responseBody);
         try {
-            ChannelHandlerContext context = clientHandler.getChannelHandlerContext();
-            if (responseBody.getFileType().equals("folder")) {
-                Set<Path> set;
-
-                try (Stream<Path> pathStream = Files.walk(filePath, Integer.MAX_VALUE)) {
-                    set = pathStream.collect(Collectors.toSet());
-                    set.forEach(p -> {
-                        FileInfo fileInfo = new FileInfo(p);
-                        fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(p));
-                        FileInfoTo file = getFileInfoTo(fileInfo);
-                        if (file.getFileType().equals("folder")) {
-                            context.write(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), file), context.newProgressivePromise());
-                            log.debug("sent request folder saving");
-
-                        } else {
-                            context.writeAndFlush(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), file), context.newProgressivePromise());
-                            sendFileToServer(file, p, context);
-                        }
-                    });
-                }
-            } else {
-                context.writeAndFlush(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody), context.newProgressivePromise());
-                sendFileToServer(responseBody, filePath, context);
-            }
+            clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
+            sendFileToServer(responseBody, filePath);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void sendFileToServer(FileInfoTo responseBody, Path filePath, ChannelHandlerContext context) {
-        ChannelFuture sendFileFuture;
-        try {
-            sendFileFuture = context.writeAndFlush(
-                    new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()),
-                    context.newProgressivePromise()
-            );
+    private void sendFolderToServer(FileInfoTo responseBody) {
+        Path filePath = getFilePath(responseBody);
+        Set<Path> set;
 
-            sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
-                @Override
-                public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
-                    if (total < 0) { // total unknown
-                        log.debug(future.channel() + " Transfer progress: " + progress);
-                    } else {
-                        log.debug(future.channel() + " Transfer progress: " + progress + " / " + total);
-                    }
-                }
-
-                @Override
-                public void operationComplete(ChannelProgressiveFuture future) {
-                    log.debug(future.channel() + " Transfer complete.");
-                }
+        try (Stream<Path> pathStream = Files.walk(filePath, Integer.MAX_VALUE)) {
+            set = pathStream.collect(Collectors.toSet());
+            set.forEach(p -> {
+                FileInfo fileInfo = new FileInfo(p);
+                sendRequestForFileSaving(fileInfo);
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            log.warn("Folder sending problem");
+        }
+    }
+
+    private Path getFilePath(FileInfoTo responseBody) {
+        return clientAuthService.getUserFolderPath().resolve(responseBody.getFilePath());
+    }
+
+    private void sendFileToServer(FileInfoTo responseBody, Path filePath) {
+        try {
+            clientHandler.sendFileToServer(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()));
+        } catch (IOException e) {
+            log.warn("file sending ex {}", e.getMessage());
         }
     }
 

@@ -35,8 +35,6 @@ public class UserDBConnection {
             log.warn("find userByUsernameAndPassword ex");
             return Optional.empty();
         }
-
-
     }
 
     public Optional<User> findUserByUsername(String username) {

@@ -24,26 +24,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
 public class ClientFileService {
     private final ClientHandler clientHandler;
     private final ClientAuthService clientAuthService;
-    private final Set<FileInfo> fileInfoSet;
+    private final Set<FileInfo> filesSet;
 
 
     @Autowired
     public ClientFileService(ClientHandler clientHandler, ClientAuthService clientAuthService) {
         this.clientHandler = clientHandler;
         this.clientAuthService = clientAuthService;
-        this.fileInfoSet = new HashSet<>();
+        this.filesSet = new HashSet<>();
     }
 
     public void sendRequestForFileSaving(FileInfo localFileInfo) {
         FileInfoTo fileInfo = getFileInfoTo(localFileInfo);
-            clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
+        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
     }
 
     private FileInfoTo getFileInfoTo(FileInfo localFileInfo) {
@@ -69,36 +68,45 @@ public class ClientFileService {
         FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
         Path filePath = getFilePath(responseBody);
         try {
-            clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
-            sendFileToServer(responseBody, filePath);
+            if (!Files.isHidden(filePath) && Files.isReadable(filePath)) {
+                clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
+                sendFileToServer(responseBody, filePath);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     public void sendDirectoryToServer(ResponseMessage responseMessage) {
         FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
         Path filePath = getFilePath(responseBody);
+        FileInfo fileInfo = new FileInfo(filePath);
+        fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(filePath));
+        FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
+        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), fileInfoTo));
+        //пытаюсь передать все папки
 
-
-        Set<Path> set;
-
-        try (Stream<Path> pathStream = Files.walk(filePath, 1)) {
-            set = pathStream.collect(Collectors.toSet());
-            if(set.size() == 1) {
-                FileInfo fileInfo = new FileInfo(filePath);
-                fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(filePath));
-                clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), fileInfo));
-            } else {
-                set.forEach(p -> {
-                    FileInfo fileInfo = new FileInfo(p);
-                    fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(p));
-                    sendRequestForFileSaving(fileInfo);
-                });
-            }
-        } catch (IOException e) {
-            log.warn("Folder sending problem");
-        }
+//        Set<Path> set;
+//
+//        try (Stream<Path> pathStream = Files.walk(filePath, 1)) {
+//            set = pathStream.collect(Collectors.toSet());
+//            if(set.size() == 1) {
+//                FileInfo fileInfo = new FileInfo(filePath);
+//                fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(filePath));
+//                FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
+//
+//                clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), fileInfoTo));
+//            } else {
+//                set.forEach(p -> {
+//                    FileInfo fileInfo = new FileInfo(p);
+//                    fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(p));
+//                    sendRequestForFileSaving(fileInfo);
+//                });
+//            }
+//        } catch (IOException e) {
+//            log.warn("Folder sending problem");
+//        }
     }
 
     private Path getFilePath(FileInfoTo responseBody) {
@@ -115,11 +123,11 @@ public class ClientFileService {
 
     //запрос списка файла с сервера
     public void receiveFilesInfoList(Path relativizedPath) {
-        if (relativizedPath.equals(Paths.get(""))) {
+        if (relativizedPath == null) {
             clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList("root")));
             return;
         }
-        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList(relativizedPath.getParent().getFileName().toString())));
+        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList(relativizedPath.toString())));
     }
 
     public void addFileListToView(FilesList infoList) {
@@ -135,13 +143,14 @@ public class ClientFileService {
                 for (FileInfoTo f : list) {
                     FileInfo local = new FileInfo(Paths.get(f.getFilePath()), f.getFileName(), f.getFileType(), f.getSize(), f.getLocalDateTime());
                     //если файла нет в локальном хранилище, сохраняем муляж с сервера с пометкой
-                    if (fileInfoSet.contains(local)) {
+                    System.out.println(local);
+                    if (filesSet.contains(local)) {
                         local.setUploadedStatus("yes");
 
-                    } else if (!fileInfoSet.contains(local)) {
+                    } else if (!filesSet.contains(local)) {
                         local.setUploadedStatus("air");
                     }
-                    fileInfoSet.add(local);
+                    filesSet.add(local);
                 }
             }
 
@@ -168,13 +177,21 @@ public class ClientFileService {
     }
 
     private void addFileList(Path path) throws IOException {
-        fileInfoSet.clear();
-        fileInfoSet.addAll(Files.list(path)
+        filesSet.clear();
+        filesSet.addAll(Files.list(path)
+                .filter(p -> {
+                    try {
+                        return !Files.isHidden(p);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return false;
+                })
                 .map(FileInfo::new)
                 .collect(Collectors.toList()));
     }
 
-    public Set<FileInfo> getFileInfoSet() {
-        return this.fileInfoSet;
+    public Set<FileInfo> getFilesSet() {
+        return this.filesSet;
     }
 }

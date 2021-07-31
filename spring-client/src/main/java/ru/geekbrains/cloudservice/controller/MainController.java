@@ -121,76 +121,14 @@ public class MainController {
         });
         //показываем статус загруженного файл
         //https://stackoverflow.com/questions/42662807/javafx-tablecolumn-cell-change - спасибо ребятам
-        onAirColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
-        onAirColumn.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (isSafe(item, empty)) {
-                    CellData data = CellData.cellData(item);
-                    Circle circle = new Circle(6);
-                    circle.setFill(data.getColor());
-                    setGraphic(circle);
-                }
-            }
+        onAirColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
 
-            private boolean isSafe(String item, boolean empty) {
-                return !empty && Objects.nonNull(item);
-            }
-        });
         //кнопки отправки файла/папки в строке
-        uploadColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
-        uploadColumn.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (isSafe(item, empty)) {
-                    if (item.equals("not") || item.equals("medium")) {
-                        JFXButton button = new JFXButton();
-                        button.setText("▲");
-                        button.setStyle("-fx-background-color: #0C0878; " +
-                                "-fx-border-color: aliceblue;  " +
-                                "-fx-text-fill: aliceblue; " +
-                                "-fx-border-radius: 50%;");
-                        setGraphic(button);
+        uploadColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
 
-                        button.setOnMouseClicked(event -> {
-                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                            fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
-
-                            clientFileService.sendRequestForFileSaving(fileInfo);
-                        });
-                    }
-                }
-            }
-
-            private boolean isSafe(String item, boolean empty) {
-                return !empty && Objects.nonNull(item);
-            }
-        });
         //кнопки загрузки файла/папки в строке
-        downloadColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
-        downloadColumn.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (isSafe(item, empty)) {
-                    if (item.equals("yes")) {
-                        JFXButton button = new JFXButton();
-                        button.setText("▼");
-                        button.setStyle("-fx-background-color: green; " +
-                                "-fx-border-color: aliceblue; " +
-                                "-fx-text-fill: aliceblue;" +
-                                "-fx-border-radius: 50%;");
-                        setGraphic(button);
-                    }
-                }
-            }
+        downloadColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
 
-            private boolean isSafe(String item, boolean empty) {
-                return !empty && Objects.nonNull(item);
-            }
-        });
 
         try {
             rootFoldersList.getItems().addAll(Files.list(clientAuthService.getUserFolderPath())
@@ -222,26 +160,120 @@ public class MainController {
         });
         currentPath = clientAuthService.getUserFolderPath();
         updateList(currentPath);
+        update();
+    }
+
+    private void setAirStatus() {
+        onAirColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isSafe(item, empty)) {
+                    CellData data = CellData.cellData(item);
+                    Circle circle = new Circle(6);
+                    circle.setFill(data.getColor());
+                    setGraphic(circle);
+                }
+            }
+
+            private boolean isSafe(String item, boolean empty) {
+                return !empty && Objects.nonNull(item);
+            }
+        });
+    }
+
+    private void setDownloadButton() {
+        downloadColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isSafe(item, empty)) {
+                    if (item.equals("yes")) {
+                        JFXButton button = new JFXButton();
+                        button.setText("▼");
+                        button.setStyle("-fx-background-color: green; " +
+                                "-fx-border-color: aliceblue; " +
+                                "-fx-text-fill: aliceblue;" +
+                                "-fx-border-radius: 50%;");
+                        setGraphic(button);
+                    }
+                }
+            }
+
+            private boolean isSafe(String item, boolean empty) {
+                return !empty && Objects.nonNull(item);
+            }
+        });
+    }
+
+    private void setUploadButtons() {
+        uploadColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isSafe(item, empty)) {
+                    if (item.equals("not")) {
+                        JFXButton button = new JFXButton();
+                        button.setText("▲");
+                        button.setStyle("-fx-background-color: #0C0878; " +
+                                "-fx-border-color: aliceblue;  " +
+                                "-fx-text-fill: aliceblue; " +
+                                "-fx-border-radius: 50%;");
+                        setGraphic(button);
+
+                        button.setOnMouseClicked(event -> {
+                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
+
+                            clientFileService.sendRequestForFileSaving(fileInfo);
+                        });
+                    }
+                }
+            }
+
+            private boolean isSafe(String item, boolean empty) {
+                return !empty && Objects.nonNull(item);
+            }
+        });
     }
 
     public void updateList(Path path) {
         Path relativizedPath = clientAuthService.getUserFolderPath().relativize(path);
         try {
             pathField.setText("/" + relativizedPath.normalize().toString());
-
-            clientFileService.receiveFilesInfoList(relativizedPath);
-            clientFileService.addLocalFilesToView(path);
+            clientFileService.receiveFilesInfoList(relativizedPath.getParent());
 
             filesList.getItems().clear();
-            if (!clientFileService.getFileInfoSet().isEmpty()) {
+            if (!clientFileService.getFilesSet().isEmpty()) {
                 filesList.getItems().addAll(
-                        clientFileService.getFileInfoSet()
+                        clientFileService.getFilesSet()
                 );
             }
             filesList.sort();
+            setAirStatus();
+            setUploadButtons();
+            setDownloadButton();
         } catch (Exception e) {
             log.warn("updateList ex {}:", e.getMessage());
         }
+    }
+
+    private void update() {
+        Thread thread = new Thread(() ->
+        {
+            while (true) {
+                updateList(currentPath);
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        );
+        thread.setDaemon(true);
+        thread.start();
     }
 
     public void btnPathUpAction(ActionEvent actionEvent) {

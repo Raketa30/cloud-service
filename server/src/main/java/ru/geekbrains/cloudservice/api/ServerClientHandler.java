@@ -19,7 +19,7 @@ import java.nio.file.Path;
 @Slf4j
 public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
     private final ServerAuthHandler serverAuthHandler;
-    private ServerFilesOperationHandler serverFilesOperationHandler;
+    private final ServerFilesOperationHandler serverFilesOperationHandler;
     @Getter
     private ChannelHandlerContext channelHandlerContext;
     @Getter
@@ -48,7 +48,6 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
         isReady = false;
         ChannelFuture channelFuture = channelHandlerContext.writeAndFlush(response, channelHandlerContext.newProgressivePromise());
         addListener(channelFuture);
-
     }
 
     private void addListener(ChannelFuture channelFuture) {

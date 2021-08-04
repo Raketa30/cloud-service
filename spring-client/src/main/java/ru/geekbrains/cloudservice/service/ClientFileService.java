@@ -20,9 +20,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,14 +29,14 @@ import java.util.stream.Collectors;
 public class ClientFileService {
     private final ClientHandler clientHandler;
     private final ClientAuthService clientAuthService;
-    private final Set<FileInfo> filesSet;
+    private final List<FileInfo> fileListForView;
 
 
     @Autowired
     public ClientFileService(ClientHandler clientHandler, ClientAuthService clientAuthService) {
         this.clientHandler = clientHandler;
         this.clientAuthService = clientAuthService;
-        this.filesSet = new HashSet<>();
+        this.fileListForView = new CopyOnWriteArrayList<>();
     }
 
     public void sendRequestForFileSaving(FileInfo localFileInfo) {
@@ -122,7 +121,7 @@ public class ClientFileService {
     }
 
     //запрос списка файла с сервера
-    public void receiveFilesInfoList(Path relativizedPath) {
+    private void sentServerFileListRequest(Path relativizedPath) {
         if (relativizedPath == null) {
             clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList("root")));
             return;
@@ -130,55 +129,49 @@ public class ClientFileService {
         clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList(relativizedPath.toString())));
     }
 
-    public void addFileListToView(FilesList infoList) {
+    public void addFileListFromServer(FilesList infoList) {
         try {
             Path root = clientAuthService.getUserFolderPath();
             if (!infoList.getParentPath().equals("root")) {
                 root = root.resolve(infoList.getParentPath());
             }
-            addFileList(root);
-            List<FileInfoTo> list = infoList.getFileInfoTos();
 
+            addFileList(root);
+
+            List<FileInfoTo> list = infoList.getFileInfoTos();
             if (!list.isEmpty()) {
                 for (FileInfoTo f : list) {
                     FileInfo local = new FileInfo(Paths.get(f.getFilePath()), f.getFileName(), f.getFileType(), f.getSize(), f.getLocalDateTime());
                     //если файла нет в локальном хранилище, сохраняем муляж с сервера с пометкой
-                    System.out.println(local);
-                    if (filesSet.contains(local)) {
+                    if (this.fileListForView.contains(local)) {
                         local.setUploadedStatus("yes");
 
-                    } else if (!filesSet.contains(local)) {
+                    } else if (!this.fileListForView.contains(local)) {
                         local.setUploadedStatus("air");
                     }
-                    filesSet.add(local);
+                    this.fileListForView.add(local);
                 }
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.warn("FileList updating exception {}", e.getMessage());
         }
     }
 
     //для рутового каталога
-    public void addLocalFilesToView() {
-        try {
-            addFileList(clientAuthService.getUserFolderPath());
-        } catch (IOException e) {
-            log.debug("folder receiving data empty");
-        }
-    }
 
-    public void addLocalFilesToView(Path path) {
+    public void getFilesList(Path relative) {
         try {
-            addFileList(path);
-        } catch (IOException e) {
+            addFileList(relative);
+            sentServerFileListRequest(relative);
+        } catch (Exception e) {
             log.debug("folder receiving data empty");
         }
     }
 
     private void addFileList(Path path) throws IOException {
-        filesSet.clear();
-        filesSet.addAll(Files.list(path)
+        fileListForView.clear();
+        fileListForView.addAll(Files.list(path)
                 .filter(p -> {
                     try {
                         return !Files.isHidden(p);
@@ -189,9 +182,13 @@ public class ClientFileService {
                 })
                 .map(FileInfo::new)
                 .collect(Collectors.toList()));
+
     }
 
-    public Set<FileInfo> getFilesSet() {
-        return this.filesSet;
+
+
+
+    public List<FileInfo> getFileListForView() {
+        return this.fileListForView;
     }
 }

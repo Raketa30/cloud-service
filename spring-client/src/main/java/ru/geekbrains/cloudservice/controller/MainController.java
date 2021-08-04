@@ -41,8 +41,8 @@ public class MainController {
     @FXML
     public TextField pathField;
     //Сервисы
-    private ClientAuthService clientAuthService;
-    private ClientFileService clientFileService;
+    private final ClientAuthService clientAuthService;
+    private final ClientFileService clientFileService;
 
     @FXML
     private BorderPane mainDialog;
@@ -241,12 +241,11 @@ public class MainController {
         Path relativizedPath = clientAuthService.getUserFolderPath().relativize(path);
         try {
             pathField.setText("/" + relativizedPath.normalize().toString());
-            clientFileService.receiveFilesInfoList(relativizedPath.getParent());
-
+            clientFileService.getFilesList(relativizedPath);
             filesList.getItems().clear();
-            if (!clientFileService.getFilesSet().isEmpty()) {
+            if (!clientFileService.getFileListForView().isEmpty()) {
                 filesList.getItems().addAll(
-                        clientFileService.getFilesSet()
+                        clientFileService.getFileListForView()
                 );
             }
             filesList.sort();
@@ -264,7 +263,7 @@ public class MainController {
             while (true) {
                 updateList(currentPath);
                 try {
-                    Thread.sleep(5000);
+                    Thread.sleep(10000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

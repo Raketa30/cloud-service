@@ -74,10 +74,6 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message> {
         log.info("sent {}", requestMessage);
     }
 
-    public ChannelHandlerContext getChannelHandlerContext() {
-        return channelHandlerContext;
-    }
-
     public void sendFileToServer(DefaultFileRegion defaultFileRegion) {
         isReady = false;
         ChannelFuture sendFileFuture = channelHandlerContext.writeAndFlush(defaultFileRegion, channelHandlerContext.newProgressivePromise());

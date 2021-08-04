@@ -38,11 +38,11 @@ public class FilesOperationResponseHandler {
 
             case FILE_LIST_SENT:
                 FilesList listInfo = (FilesList) responseMessage.getAbstractMessageObject();
-                clientFileService.addFileListToView(listInfo);
+                clientFileService.addFileListFromServer(listInfo);
                 break;
 
             case EMPTY_LIST:
-                clientFileService.addLocalFilesToView();
+                log.debug("server file list empty");
                 break;
 
             case FILE_NOT_EXIST:

@@ -59,6 +59,7 @@ public class ModalPickFolder {
         }
     }
 
+
     private void configureDirectoryChooser(DirectoryChooser directoryChooser) {
         directoryChooser.setTitle("Select root folder");
         directoryChooser.setInitialDirectory(new File(System.getProperty("user.home")));

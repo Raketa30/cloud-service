@@ -1,5 +1,6 @@
 package ru.geekbrains.cloudservice.service;
 
+import io.netty.channel.DefaultFileRegion;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.api.ServerClientHandler;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
@@ -12,9 +13,11 @@ import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Optional;
 
@@ -103,5 +106,30 @@ public class FileServerService {
         return serverRoot
                 .resolve(activeUser.getServerRootPath())
                 .resolve(fileInfoTo.getFilePath());
+    }
+
+    public void downloadFile(RequestMessage requestMessage) {
+        FileInfoTo responseBody = (FileInfoTo) requestMessage.getAbstractMessageObject();
+        Path filePath = getFilePath(responseBody);
+        try {
+            if (!Files.isHidden(filePath) && Files.isReadable(filePath)) {
+                clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SENT), responseBody));
+                sendFileToServer(responseBody, filePath);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendFileToServer(FileInfoTo responseBody, Path filePath) {
+        try {
+            clientHandler.sendFileToServer(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()));
+        } catch (IOException e) {
+            log.warn("file sending ex {}", e.getMessage());
+        }
+    }
+
+    private Path getFilePath(FileInfoTo responseBody) {
+        return Paths.get(activeUser.getServerRootPath()).resolve(responseBody.getFilePath());
     }
 }

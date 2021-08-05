@@ -67,7 +67,7 @@ public class ClientFileHandler extends ChunkedWriteHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.info("filehjandler exception");
+        log.info("file handler exception");
     }
 
     @Override

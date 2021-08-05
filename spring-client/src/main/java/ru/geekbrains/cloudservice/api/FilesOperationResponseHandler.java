@@ -6,17 +6,19 @@ import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
-import ru.geekbrains.cloudservice.model.FilesList;
 import ru.geekbrains.cloudservice.service.ClientFileService;
+import ru.geekbrains.cloudservice.service.FileListViewService;
 
 @Service
 @Slf4j
 public class FilesOperationResponseHandler {
     private final ClientFileService clientFileService;
+    private final FileListViewService fileListViewService;
 
     @Autowired
-    public FilesOperationResponseHandler(ClientFileService clientFileService) {
+    public FilesOperationResponseHandler(ClientFileService clientFileService, FileListViewService fileListViewService) {
         this.clientFileService = clientFileService;
+        this.fileListViewService = fileListViewService;
     }
 
     public void processHandler(ResponseMessage responseMessage) {
@@ -37,8 +39,7 @@ public class FilesOperationResponseHandler {
                 break;
 
             case FILE_LIST_SENT:
-                FilesList listInfo = (FilesList) responseMessage.getAbstractMessageObject();
-                clientFileService.addFileListFromServer(listInfo);
+                fileListViewService.addFileListFromServer(responseMessage);
                 break;
 
             case EMPTY_LIST:

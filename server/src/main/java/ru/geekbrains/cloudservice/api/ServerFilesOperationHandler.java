@@ -47,6 +47,7 @@ public class ServerFilesOperationHandler {
                     break;
 
                 case DOWNLOAD_FILE:
+                    fileServerService.downloadFile(requestMessage);
                     break;
 
                 case DOWNLOAD_FILE_LIST:

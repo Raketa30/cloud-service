@@ -108,4 +108,10 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
         }
         log.debug(pipeline.toString());
     }
+
+    public void sendFileToServer(DefaultFileRegion defaultFileRegion) {
+        isReady = false;
+        ChannelFuture sendFileFuture = channelHandlerContext.writeAndFlush(defaultFileRegion, channelHandlerContext.newProgressivePromise());
+        addListener(sendFileFuture);
+    }
 }

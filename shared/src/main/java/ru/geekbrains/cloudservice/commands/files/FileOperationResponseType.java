@@ -7,6 +7,8 @@ public enum FileOperationResponseType implements CommandType {
     FILE_READY_TO_SAVE,
     DIRECTORY_READY_TO_SAVE,
 
+    FILE_SENT,
+
     FILE_LIST_SENT,
 
     FILE_NOT_EXIST,

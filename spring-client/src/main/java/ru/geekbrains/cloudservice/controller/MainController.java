@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
 import ru.geekbrains.cloudservice.service.ClientFileService;
+import ru.geekbrains.cloudservice.service.FileListViewService;
 
 import java.io.IOException;
 import java.net.URL;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 public class MainController {
     private final FxWeaver fxWeaver;
 
+
     private Path currentPath;
 
     @FXML
@@ -43,6 +45,7 @@ public class MainController {
     //Сервисы
     private final ClientAuthService clientAuthService;
     private final ClientFileService clientFileService;
+    private final FileListViewService fileListViewService;
 
     @FXML
     private BorderPane mainDialog;
@@ -50,8 +53,6 @@ public class MainController {
     @FXML
     private Stage stage;
 
-    @FXML
-    public TableColumn<FileInfo, String> downloadColumn;
     @FXML
     private TableView<FileInfo> filesList;
 
@@ -75,12 +76,13 @@ public class MainController {
 
     @FXML
     private TableColumn<FileInfo, String> fileTypeColumn;
-
     @FXML
-    private TableColumn<FileInfo, String> uploadColumn;
+    public TableColumn<FileInfo, String> deleteColumn;
 
     @FXML
     private TableColumn<FileInfo, String> onAirColumn;
+    @FXML
+    private TableColumn<FileInfo, String> upDownColumn;
 
     @FXML
     private TableColumn<FileInfo, String> fileLastModifiedColumn;
@@ -89,10 +91,11 @@ public class MainController {
     private JFXListView<String> rootFoldersList;
 
     @Autowired
-    public MainController(FxWeaver fxWeaver, ClientAuthService clientAuthService, ClientFileService clientFileService) {
+    public MainController(FxWeaver fxWeaver, ClientAuthService clientAuthService, ClientFileService clientFileService, FileListViewService fileListViewService) {
         this.fxWeaver = fxWeaver;
         this.clientAuthService = clientAuthService;
         this.clientFileService = clientFileService;
+        this.fileListViewService = fileListViewService;
     }
 
     @FXML
@@ -123,12 +126,10 @@ public class MainController {
         //https://stackoverflow.com/questions/42662807/javafx-tablecolumn-cell-change - спасибо ребятам
         onAirColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
 
-        //кнопки отправки файла/папки в строке
-        uploadColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
+        //кнопки отправки/загрузки файла/папки в строке
+        upDownColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
 
-        //кнопки загрузки файла/папки в строке
-        downloadColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
-
+        deleteColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
 
         try {
             rootFoldersList.getItems().addAll(Files.list(clientAuthService.getUserFolderPath())
@@ -182,13 +183,13 @@ public class MainController {
         });
     }
 
-    private void setDownloadButton() {
-        downloadColumn.setCellFactory(column -> new TableCell<>() {
+    private void setDownloadUploadButton() {
+        upDownColumn.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (isSafe(item, empty)) {
-                    if (item.equals("yes")) {
+                    if (item.equals("air")) {
                         JFXButton button = new JFXButton();
                         button.setText("▼");
                         button.setStyle("-fx-background-color: green; " +
@@ -196,22 +197,15 @@ public class MainController {
                                 "-fx-text-fill: aliceblue;" +
                                 "-fx-border-radius: 50%;");
                         setGraphic(button);
+
+                        button.setOnMouseClicked(event -> {
+                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
+                            clientFileService.sendRequestForFileDownloading(fileInfo);
+                            updateList(currentPath);
+                        });
                     }
-                }
-            }
 
-            private boolean isSafe(String item, boolean empty) {
-                return !empty && Objects.nonNull(item);
-            }
-        });
-    }
-
-    private void setUploadButtons() {
-        uploadColumn.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (isSafe(item, empty)) {
                     if (item.equals("not")) {
                         JFXButton button = new JFXButton();
                         button.setText("▲");
@@ -224,10 +218,35 @@ public class MainController {
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
                             fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
-
                             clientFileService.sendRequestForFileSaving(fileInfo);
+                            updateList(currentPath);
                         });
                     }
+                }
+            }
+
+            private boolean isSafe(String item, boolean empty) {
+                return !empty && Objects.nonNull(item);
+            }
+        });
+    }
+
+    private void setDeleteButtons() {
+        deleteColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isSafe(item, empty)) {
+                    JFXButton button = new JFXButton();
+                    button.setText("x");
+                    setGraphic(button);
+
+                    button.setOnMouseClicked(event -> {
+                        FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                        fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
+                        clientFileService.sendRequestForDeleting(fileInfo);
+                        updateList(currentPath);
+                    });
                 }
             }
 
@@ -241,38 +260,20 @@ public class MainController {
         Path relativizedPath = clientAuthService.getUserFolderPath().relativize(path);
         try {
             pathField.setText("/" + relativizedPath.normalize().toString());
-            clientFileService.getFilesList(relativizedPath);
+            fileListViewService.getLocalFileList(path, relativizedPath);
             filesList.getItems().clear();
-            if (!clientFileService.getFileListForView().isEmpty()) {
+            if (!fileListViewService.getFileListForView().isEmpty() && fileListViewService.isUpdated()) {
                 filesList.getItems().addAll(
-                        clientFileService.getFileListForView()
+                        fileListViewService.getFileListForView()
                 );
             }
             filesList.sort();
             setAirStatus();
-            setUploadButtons();
-            setDownloadButton();
+            setDeleteButtons();
+            setDownloadUploadButton();
         } catch (Exception e) {
             log.warn("updateList ex {}:", e.getMessage());
         }
-    }
-
-    private void update() {
-        Thread thread = new Thread(() ->
-        {
-            while (true) {
-                updateList(currentPath);
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        );
-        thread.setDaemon(true);
-        thread.start();
     }
 
     public void btnPathUpAction(ActionEvent actionEvent) {
@@ -311,5 +312,33 @@ public class MainController {
         stage.show();
     }
 
+
+    private void update() {
+        Thread updateThread = new Thread(() -> {
+            while (true) {
+                if(fileListViewService.isUpdated()) {
+                    updateList(currentPath);
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        updateThread.setDaemon(true);
+    }
+
+    public void deleteFile(ActionEvent actionEvent) {
+
+    }
+
+    public void addNewFolder(ActionEvent actionEvent) {
+
+    }
+
+    public void addNewFile(ActionEvent actionEvent) {
+
+    }
 }
 

@@ -11,14 +11,17 @@ import ru.geekbrains.cloudservice.commands.Response;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.auth.AuthResponse;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
+import ru.geekbrains.cloudservice.dto.FileInfoTo;
+
+import java.nio.file.Path;
 
 @Slf4j
 @Controller
 //@ChannelHandler.Sharable
-public class ClientHandler extends SimpleChannelInboundHandler<Message> {
+public class ClientMessageHandler extends SimpleChannelInboundHandler<Message> {
 
     @Autowired
-    private AuthResponseHandler authResponseHandler;
+    private ClientAuthHandler clientAuthHandler;
 
     @Autowired
     private FilesOperationResponseHandler filesOperationResponseHandler;
@@ -34,7 +37,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message> {
         ResponseMessage responseMessage = (ResponseMessage) msg;
         Response response = responseMessage.getResponse();
         if (response instanceof AuthResponse) {
-            authResponseHandler.processHandler(responseMessage);
+            clientAuthHandler.processHandler(responseMessage);
         }
 
         if (response instanceof FileOperationResponse) {
@@ -97,5 +100,20 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message> {
                 isReady = true;
             }
         });
+    }
+
+    public void createFileHandler(Path filePath, FileInfoTo fileInfoTo) {
+        ClientFileHandler clientFileHandler = new ClientFileHandler(filePath, fileInfoTo);
+
+        ChannelPipeline pipeline = channelHandlerContext.pipeline()
+                .addBefore("od", "fh", clientFileHandler);
+        log.info(pipeline.toString());
+        try {
+            clientFileHandler.channelRegistered(channelHandlerContext);
+            clientFileHandler.channelActive(channelHandlerContext);
+        } catch (Exception e) {
+            log.debug("server File Handler register error: {}", e.getMessage());
+        }
+        log.debug(pipeline.toString());
     }
 }

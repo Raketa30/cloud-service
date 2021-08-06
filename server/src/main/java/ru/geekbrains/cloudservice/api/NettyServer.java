@@ -40,7 +40,7 @@ public class NettyServer {
                                     .addLast("oe", new ObjectEncoder())
                                     //In
                                     .addLast("od", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)))
-                                    .addLast("2", new ServerClientHandler(authServerService));
+                                    .addLast("2", new ServerMessageHandler(authServerService));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)

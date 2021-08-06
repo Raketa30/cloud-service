@@ -3,7 +3,7 @@ package ru.geekbrains.cloudservice.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.api.ClientHandler;
+import ru.geekbrains.cloudservice.api.ClientMessageHandler;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FileListViewService {
-    private final ClientHandler clientHandler;
+    private final ClientMessageHandler clientMessageHandler;
     private final List<FileInfo> localList;
     private boolean updated;
 
     @Autowired
-    public FileListViewService(ClientHandler clientHandler) {
-        this.clientHandler = clientHandler;
+    public FileListViewService(ClientMessageHandler clientMessageHandler) {
+        this.clientMessageHandler = clientMessageHandler;
         this.localList = new CopyOnWriteArrayList<>();
         this.updated = false;
     }
@@ -94,10 +94,10 @@ public class FileListViewService {
     //запрос списка файла с сервера
     private void sentServerFileListRequest(Path relativizedPath) {
         if (relativizedPath.toString().equals("")) {
-            clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList("root")));
+            clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList("root")));
             return;
         }
-        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList(relativizedPath.toString())));
+        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList(relativizedPath.toString())));
         this.updated = false;
     }
 

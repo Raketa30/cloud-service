@@ -42,6 +42,10 @@ public class FilesOperationResponseHandler {
                 fileListViewService.addFileListFromServer(responseMessage);
                 break;
 
+            case FILE_SENT:
+                clientFileService.saveFileFromServer(responseMessage);
+                break;
+
             case EMPTY_LIST:
                 log.debug("server file list empty");
                 break;

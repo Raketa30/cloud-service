@@ -17,11 +17,11 @@ import java.util.Optional;
 @Slf4j
 public class ServerAuthHandler {
     private final AuthServerService authServerService;
-    private final ServerClientHandler clientHandler;
+    private final ServerMessageHandler clientHandler;
     @Getter
     private User activeUser;
 
-    public ServerAuthHandler(AuthServerService authServerService, ServerClientHandler clientHandler) {
+    public ServerAuthHandler(AuthServerService authServerService, ServerMessageHandler clientHandler) {
         this.authServerService = authServerService;
         this.clientHandler = clientHandler;
     }

@@ -27,13 +27,12 @@ public class ClientFileHandler extends ChunkedWriteHandler {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelActive();
         log.info("file handler active");
-
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
-            File file = filePath.toFile();//remember to change dest
+            File file = filePath.toFile();
             if (!file.exists()) {
                 file.createNewFile();
             }
@@ -47,7 +46,6 @@ public class ClientFileHandler extends ChunkedWriteHandler {
                     fileChannel.position(file.length());
                     fileChannel.write(byteBuffer);
                 }
-
                 byteBuf.release();
                 fileChannel.close();
             }
@@ -58,7 +56,7 @@ public class ClientFileHandler extends ChunkedWriteHandler {
             }
 
         } catch (Exception e) {
-            log.warn("Filehandler exception");
+            log.warn("File handler exception");
             log.warn("Problem with file receiving");
             Files.delete(filePath);
             ctx.pipeline().remove(this);

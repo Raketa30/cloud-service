@@ -12,18 +12,18 @@ import ru.geekbrains.cloudservice.service.FileServerService;
 @Slf4j
 public class ServerFilesOperationHandler {
     private final FileServerService fileServerService;
-    private final ServerClientHandler serverClientHandler;
+    private final ServerMessageHandler serverMessageHandler;
 
-    public ServerFilesOperationHandler(ServerClientHandler serverClientHandler) {
+    public ServerFilesOperationHandler(ServerMessageHandler serverMessageHandler) {
 
-        fileServerService = new FileServerService(serverClientHandler);
-        this.serverClientHandler = serverClientHandler;
+        fileServerService = new FileServerService(serverMessageHandler);
+        this.serverMessageHandler = serverMessageHandler;
     }
 
     public void processRequest(RequestMessage requestMessage,User activeUser) {
         log.info("received file request {}", requestMessage.getRequest());
         if(activeUser == null) {
-            serverClientHandler.sendResponse(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));
+            serverMessageHandler.sendResponse(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));
 
         } else {
             fileServerService.setActiveUser(activeUser);

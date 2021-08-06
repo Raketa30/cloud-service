@@ -4,7 +4,7 @@ import io.netty.channel.DefaultFileRegion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.api.ClientHandler;
+import ru.geekbrains.cloudservice.api.ClientMessageHandler;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
@@ -23,18 +23,18 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 public class ClientFileService {
-    private final ClientHandler clientHandler;
+    private final ClientMessageHandler clientMessageHandler;
     private final ClientAuthService clientAuthService;
 
     @Autowired
-    public ClientFileService(ClientHandler clientHandler, ClientAuthService clientAuthService) {
-        this.clientHandler = clientHandler;
+    public ClientFileService(ClientMessageHandler clientMessageHandler, ClientAuthService clientAuthService) {
+        this.clientMessageHandler = clientMessageHandler;
         this.clientAuthService = clientAuthService;
     }
 
     public void sendRequestForFileSaving(FileInfo localFileInfo) {
         FileInfoTo fileInfo = getFileInfoTo(localFileInfo);
-        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
+        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
     }
 
     public void sendFileToServer(ResponseMessage responseMessage) {
@@ -42,7 +42,7 @@ public class ClientFileService {
         Path filePath = getFilePath(responseBody);
         try {
             if (!Files.isHidden(filePath) && Files.isReadable(filePath)) {
-                clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
+                clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
                 sendFileToServer(responseBody, filePath);
             }
         } catch (Exception e) {
@@ -52,7 +52,7 @@ public class ClientFileService {
 
     private void sendFileToServer(FileInfoTo responseBody, Path filePath) {
         try {
-            clientHandler.sendFileToServer(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()));
+            clientMessageHandler.sendFileToServer(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()));
         } catch (IOException e) {
             log.warn("file sending ex {}", e.getMessage());
         }
@@ -64,12 +64,12 @@ public class ClientFileService {
         FileInfo fileInfo = new FileInfo(filePath);
         fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(filePath));
         FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
-        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), fileInfoTo));
+        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), fileInfoTo));
     }
 
     public void sendRequestForFileDownloading(FileInfo fileInfo) {
         FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
-        clientHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_FILE), fileInfoTo));
+        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_FILE), fileInfoTo));
     }
 
     public void sendRequestForDeleting(FileInfo fileInfo) {
@@ -99,6 +99,11 @@ public class ClientFileService {
         return fileInfo;
     }
 
+    public void saveFileFromServer(ResponseMessage responseMessage) {
+        FileInfoTo fileInfoTo = (FileInfoTo) responseMessage.getAbstractMessageObject();
+        Path filePath = getFilePath(fileInfoTo);
+        clientMessageHandler.createFileHandler(filePath, fileInfoTo);
+    }
 }
 
 

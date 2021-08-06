@@ -2,7 +2,7 @@ package ru.geekbrains.cloudservice.service;
 
 import io.netty.channel.DefaultFileRegion;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.api.ServerClientHandler;
+import ru.geekbrains.cloudservice.api.ServerMessageHandler;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
@@ -23,12 +23,12 @@ import java.util.Optional;
 
 @Slf4j
 public class FileServerService {
-    private final ServerClientHandler clientHandler;
+    private final ServerMessageHandler clientHandler;
     private final UserOperationalPathsRepo userOperationalPathsRepo;
     private final Path serverRoot;
     private User activeUser;
 
-    public FileServerService(ServerClientHandler clientHandler) {
+    public FileServerService(ServerMessageHandler clientHandler) {
         this.clientHandler = clientHandler;
         this.userOperationalPathsRepo = new UserOperationalPathsRepo();
         serverRoot = Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/server/main_root_folder/");
@@ -94,10 +94,6 @@ public class FileServerService {
         }
     }
 
-    private Path getResolvedPath(FileInfoTo fileInfoTo) {
-        return Paths.get(activeUser.getServerRootPath()).resolve(fileInfoTo.getFilePath());
-    }
-
     public void setActiveUser(User activeUser) {
         this.activeUser = activeUser;
     }
@@ -109,27 +105,21 @@ public class FileServerService {
     }
 
     public void downloadFile(RequestMessage requestMessage) {
-        FileInfoTo responseBody = (FileInfoTo) requestMessage.getAbstractMessageObject();
-        Path filePath = getFilePath(responseBody);
-        try {
-            if (!Files.isHidden(filePath) && Files.isReadable(filePath)) {
-                clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SENT), responseBody));
-                sendFileToServer(responseBody, filePath);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
+        Optional<FileInfoTo> fileInfoFromDataBase = userOperationalPathsRepo.findFileInfoByRelativePath(fileInfoTo.getFilePath());
+
+        if(fileInfoFromDataBase.isPresent()) {
+            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SENT), fileInfoTo));
+            sendFileToClient(fileInfoTo, getFullPath(fileInfoTo));
         }
+
     }
 
-    private void sendFileToServer(FileInfoTo responseBody, Path filePath) {
+    private void sendFileToClient(FileInfoTo responseBody, Path filePath) {
         try {
-            clientHandler.sendFileToServer(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()));
+            clientHandler.sendFileToClient(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()));
         } catch (IOException e) {
             log.warn("file sending ex {}", e.getMessage());
         }
-    }
-
-    private Path getFilePath(FileInfoTo responseBody) {
-        return Paths.get(activeUser.getServerRootPath()).resolve(responseBody.getFilePath());
     }
 }

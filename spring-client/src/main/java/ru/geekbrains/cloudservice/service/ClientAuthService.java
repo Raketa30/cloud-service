@@ -4,9 +4,10 @@ package ru.geekbrains.cloudservice.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.api.ClientHandler;
+import ru.geekbrains.cloudservice.api.ClientMessageHandler;
 import ru.geekbrains.cloudservice.commands.AbstractMessage;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
+import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
 import ru.geekbrains.cloudservice.dto.UserTo;
@@ -25,7 +26,7 @@ import java.util.Scanner;
 @Service
 public class ClientAuthService {
     @Autowired
-    private ClientHandler clientHandler;
+    private ClientMessageHandler clientMessageHandler;
 
     private String userFolderPath;
     private UserTo userTo;
@@ -46,19 +47,19 @@ public class ClientAuthService {
 
     public void userLogin(String username, String password) {
         AbstractMessage abstractMessage = new User(username, password);
-        clientHandler.sendRequestToServer(new RequestMessage(new AuthRequest(AuthRequestType.LOGIN), abstractMessage ));
+        clientMessageHandler.sendRequestToServer(new RequestMessage(new AuthRequest(AuthRequestType.LOGIN), abstractMessage ));
     }
 
 
     public void registerUser(String username, String password) {
         AbstractMessage abstractMessage = new User(username, password);
-        clientHandler.sendRequestToServer(new RequestMessage(new AuthRequest(AuthRequestType.REGISTRATION),abstractMessage) );
+        clientMessageHandler.sendRequestToServer(new RequestMessage(new AuthRequest(AuthRequestType.REGISTRATION),abstractMessage) );
     }
 
-    public void confirmLoginRequest(AbstractMessage userFromRequest) {
+    public void confirmLoginRequest(ResponseMessage message) {
         //вывести главное окно с именем польователя
+        this.userTo = (UserTo)message.getAbstractMessageObject();
         this.loginConfirm = true;
-        this.userTo = (UserTo)userFromRequest;
         Optional<String> optionalPath = findUserFolderPath();
         optionalPath.ifPresent(s -> this.userFolderPath = s);
         log.info("logged {}", loginConfirm);
@@ -76,7 +77,9 @@ public class ClientAuthService {
         loginDecline = true;
     }
 
-    public void confirmRegistration() {
+    public void confirmRegistration(ResponseMessage message) {
+        UserTo userTo = (UserTo)message.getAbstractMessageObject();
+        log.info("Registered new user: {}", userTo.getUsername());
         registrationConfirm = true;
     }
 
@@ -101,6 +104,7 @@ public class ClientAuthService {
     }
 
     public void declineLoginRequest() {
+        log.info("login wrong response");
         this.loginDecline = true;
     }
 
@@ -158,7 +162,7 @@ public class ClientAuthService {
         this.registrationDecline = false;
     }
 
-    public void setClientHandler(ClientHandler clientHandler) {
-        this.clientHandler = clientHandler;
+    public void setClientMessageHandler(ClientMessageHandler clientMessageHandler) {
+        this.clientMessageHandler = clientMessageHandler;
     }
 }

@@ -18,15 +18,15 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class NettyConnector {
-    private ClientHandler clientHandler;
+    private ClientMessageHandler clientMessageHandler;
 
     public NettyConnector() {
         new Thread(() -> init("localhost", 8189)).start();
     }
 
     @Autowired
-    public void setClientHandler(ClientHandler clientHandler) {
-        this.clientHandler = clientHandler;
+    public void setClientMessageHandler(ClientMessageHandler clientMessageHandler) {
+        this.clientMessageHandler = clientMessageHandler;
     }
 
     private void init(String host, int port) {
@@ -42,8 +42,8 @@ public class NettyConnector {
                         .addLast("oe", new ObjectEncoder())
 
                         .addLast("od", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)))
-//                        .addLast("cw", new ChunkedWriteHandler())
-                        .addLast("2", clientHandler);
+
+                        .addLast("2", clientMessageHandler);
             }
         });
         try {

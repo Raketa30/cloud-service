@@ -17,7 +17,7 @@ import ru.geekbrains.cloudservice.service.AuthServerService;
 import java.nio.file.Path;
 
 @Slf4j
-public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
+public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
     private final ServerAuthHandler serverAuthHandler;
     private final ServerFilesOperationHandler serverFilesOperationHandler;
     @Getter
@@ -26,7 +26,7 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
     @Setter
     private boolean isReady;
 
-    public ServerClientHandler(AuthServerService authServerService) {
+    public ServerMessageHandler(AuthServerService authServerService) {
         serverAuthHandler = new ServerAuthHandler(authServerService, this);
         serverFilesOperationHandler = new ServerFilesOperationHandler(this);
     }
@@ -109,7 +109,7 @@ public class ServerClientHandler extends SimpleChannelInboundHandler<Message> {
         log.debug(pipeline.toString());
     }
 
-    public void sendFileToServer(DefaultFileRegion defaultFileRegion) {
+    public void sendFileToClient(DefaultFileRegion defaultFileRegion) {
         isReady = false;
         ChannelFuture sendFileFuture = channelHandlerContext.writeAndFlush(defaultFileRegion, channelHandlerContext.newProgressivePromise());
         addListener(sendFileFuture);

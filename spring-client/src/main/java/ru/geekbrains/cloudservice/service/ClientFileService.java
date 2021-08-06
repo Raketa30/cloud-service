@@ -14,10 +14,7 @@ import ru.geekbrains.cloudservice.model.FileInfo;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -103,6 +100,15 @@ public class ClientFileService {
         FileInfoTo fileInfoTo = (FileInfoTo) responseMessage.getAbstractMessageObject();
         Path filePath = getFilePath(fileInfoTo);
         clientMessageHandler.createFileHandler(filePath, fileInfoTo);
+    }
+
+    public void copyFileToUserFolder(Path from, Path to) {
+        try {
+            Files.copy(from, to.resolve(from.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+            log.warn("file copy ex {}");
+        }
     }
 }
 

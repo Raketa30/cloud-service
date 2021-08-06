@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+<AnchorPane xmlns:fx="http://javafx.com/fxml/1" fx:id="modalWindowFileChooser" prefHeight="177.0" prefWidth="600.0"
+            style="-fx-background-color: #0097a7;" xmlns="http://javafx.com/javafx/11"
+            fx:controller="ru.geekbrains.cloudservice.controller.ModalPickFile">
+    <children>
+        <AnchorPane layoutY="-2.0" prefHeight="45.0" prefWidth="600.0" style="-fx-background-color: #006978;">
+            <children>
+                <Label layoutX="14.0" layoutY="11.0" text="Add new file" textFill="WHITE">
+                    <font>
+                        <Font size="19.0"/>
+                    </font>
+                </Label>
+                <JFXButton layoutX="560.0" layoutY="10.0" onAction="#closeModalWindow"
+                           style="-fx-background-color: #29434e;" text="X" textAlignment="CENTER" textFill="WHITE">
+                    <font>
+                        <Font name="System Bold" size="13.0"/>
+                    </font>
+                </JFXButton>
+            </children>
+        </AnchorPane>
+        <JFXButton layoutX="486.0" layoutY="67.0" onAction="#pickChoosedPath" prefHeight="37.0" prefWidth="86.0"
+                   style="-fx-background-color: #56c8d8;" text="Pick" textFill="WHITE">
+            <font>
+                <Font size="19.0"/>
+            </font>
+        </JFXButton>
+        <TextField fx:id="pathTextField" layoutX="28.0" layoutY="67.0" prefHeight="37.0" prefWidth="437.0"/>
+        <JFXButton layoutX="246.0" layoutY="126.0" onAction="#confirmUserFolderPath" prefHeight="37.0" prefWidth="109.0"
+                   style="-fx-background-color: #006978;" text="Ok" textFill="WHITE">
+            <font>
+                <Font size="19.0"/>
+            </font>
+        </JFXButton>
+    </children>
+</AnchorPane>

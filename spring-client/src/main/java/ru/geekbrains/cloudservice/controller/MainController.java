@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 public class MainController {
     private final FxWeaver fxWeaver;
 
-
     private Path currentPath;
 
     @FXML
@@ -162,6 +161,10 @@ public class MainController {
         currentPath = clientAuthService.getUserFolderPath();
         updateList(currentPath);
         update();
+    }
+
+    public Path getPath() {
+        return this.currentPath;
     }
 
     private void setAirStatus() {
@@ -338,7 +341,7 @@ public class MainController {
     }
 
     public void addNewFile(ActionEvent actionEvent) {
-
+        fxWeaver.loadController(ModalPickFile.class).show();
     }
 }
 

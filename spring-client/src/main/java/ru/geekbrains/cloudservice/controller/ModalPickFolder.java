@@ -1,5 +1,6 @@
 package ru.geekbrains.cloudservice.controller;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -12,6 +13,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
 
 import java.io.File;
@@ -23,6 +25,7 @@ public class ModalPickFolder {
 
     private final FxWeaver fxWeaver;
     private final ClientAuthService clientAuthService;
+    private final DataModel dataModel;
 
     @FXML
     private Stage stage;
@@ -34,14 +37,14 @@ public class ModalPickFolder {
     private TextField pathTextField;
 
     @Autowired
-    public ModalPickFolder(FxWeaver fxWeaver, ClientAuthService clientAuthService) {
+    public ModalPickFolder(FxWeaver fxWeaver, ClientAuthService clientAuthService, DataModel dataModel) {
         this.fxWeaver = fxWeaver;
         this.clientAuthService = clientAuthService;
+        this.dataModel = dataModel;
     }
 
     @FXML
     void closeModalWindow(ActionEvent event) {
-        clientAuthService.resetFlags();
         fxWeaver.loadController(AuthController.class).show();
         this.stage.hide();
     }
@@ -59,24 +62,26 @@ public class ModalPickFolder {
         }
     }
 
-
     private void configureDirectoryChooser(DirectoryChooser directoryChooser) {
         directoryChooser.setTitle("Select root folder");
         directoryChooser.setInitialDirectory(new File(System.getProperty("user.home")));
     }
 
     public void show() {
-        this.stage = new Stage();
-        stage.setScene(new Scene(modalWindowFolderChooser));
-        stage.setMinWidth(600);
-        stage.setMinHeight(177);
-        stage.setResizable(false);
-        stage.show();
+        Platform.runLater(() -> {
+            this.stage = new Stage();
+            stage.setScene(new Scene(modalWindowFolderChooser));
+            stage.setMinWidth(600);
+            stage.setMinHeight(177);
+            stage.setResizable(false);
+            stage.show();
+        });
     }
 
     public void confirmUserFolderPath(ActionEvent actionEvent) {
-        clientAuthService.createLocalUserDirectory(pathTextField.getText());
+        clientAuthService.createLocalUserDirectory(pathTextField.getText(), dataModel.getUser().getUsername());
+        stage.getScene().getWindow().hide();
         fxWeaver.loadController(MainController.class).show();
-        this.stage.hide();
+
     }
 }

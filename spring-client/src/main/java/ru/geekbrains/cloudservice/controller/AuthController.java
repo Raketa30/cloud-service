@@ -1,9 +1,11 @@
 package ru.geekbrains.cloudservice.controller;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
@@ -13,29 +15,35 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.geekbrains.cloudservice.dto.UserTo;
+import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
 
 import java.net.URL;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 @Slf4j
 @Component
 @FxmlView("loginPage.fxml")
 public class AuthController {
-
     private final FxWeaver fxWeaver;
+    private final ClientAuthService clientAuthService;
+    private final DataModel dataModel;
 
+    @FXML
     public AnchorPane mainDialog;
 
-    private ClientAuthService clientAuthService;
+    @FXML
+    public Label wrongLogin;
 
+    @FXML
     private Stage stage;
 
     @Autowired
-    public AuthController(FxWeaver fxWeaver, ClientAuthService clientAuthService) {
+    public AuthController(FxWeaver fxWeaver, ClientAuthService clientAuthService, DataModel dataModel) {
         this.fxWeaver = fxWeaver;
         this.clientAuthService = clientAuthService;
+        this.dataModel = dataModel;
     }
 
     @FXML
@@ -58,32 +66,18 @@ public class AuthController {
 
     @FXML
     void signIn(ActionEvent event) {
-        loginButton.getScene().getWindow().hide();
         String username = loginUserName.getText();
         String password = PasswordField.getText();
-
-        clientAuthService.userLogin(username, password);
-
-        while (!clientAuthService.isLoginConfirm() || !clientAuthService.isLoginDecline()) {
-            if (clientAuthService.isLoginConfirm()) {
-                Optional<String> userPath = clientAuthService.findUserFolderPath();
-
-                if(userPath.isPresent()) {
-                    //если у юзера есть своя папка на устройстве -> переходим в папку
-                    fxWeaver.loadController(MainController.class).show();
-                    break;
+        if (validateCredentials(username, password)) {
+            clientAuthService.userLogin(username, password);
+            SimpleObjectProperty<UserTo> userProperty = dataModel.userProperty();
+            userProperty.addListener((observable, oldValue, newValue) -> {
+                if (!newValue.getUsername().equals("empty")) {
+                    loginOk();
                 } else {
-                    //если папки нет, предлагаем ему выбрать расположение папки на компьютере
-                    fxWeaver.loadController(ModalPickFolder.class).show();
-                    break;
+                    wrongLogin.setVisible(true);
                 }
-            }
-
-            if(clientAuthService.isLoginDecline()) {
-                //выводим лэйбл о том что неудачный вход
-                fxWeaver.loadController(AuthController.class).show();
-                break;
-            }
+            });
         }
     }
 
@@ -99,8 +93,16 @@ public class AuthController {
 
     }
 
+    public void loginOk() {
+        String path = dataModel.getRootPath();
+        if (path.equals("empty")) {
+            fxWeaver.loadController(ModalPickFolder.class).show();
+        } else {
+            fxWeaver.loadController(MainController.class).show();
+        }
+    }
+
     public void show() {
-        clientAuthService.resetFlags();
         this.stage = new Stage();
         stage.setScene(new Scene(mainDialog));
         stage.setMinWidth(650);
@@ -109,6 +111,9 @@ public class AuthController {
         stage.show();
     }
 
-
+    private boolean validateCredentials(String username, String password) {
+        return username != null && username.matches("[A-Za-z0-9]+")
+                && !password.equals("");
+    }
 }
 

@@ -1,3 +1,2 @@
 
-u1 : /Users/duckpool/sd/GeekbrainsCloud-u1
-user : /Users/duckpool/sd/GeekbrainsCloud-user
+user : /Users/duckpool/dev/courses/GeekbrainsCloud-user

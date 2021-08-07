@@ -17,7 +17,6 @@ import java.nio.file.Path;
 
 @Slf4j
 @Controller
-//@ChannelHandler.Sharable
 public class ClientMessageHandler extends SimpleChannelInboundHandler<Message> {
 
     @Autowired

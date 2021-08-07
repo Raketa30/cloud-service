@@ -1,16 +1,14 @@
 package ru.geekbrains.cloudservice.service;
 
+import javafx.collections.ObservableList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.api.ClientMessageHandler;
-import ru.geekbrains.cloudservice.commands.RequestMessage;
+import ru.geekbrains.cloudservice.commands.FilesListMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
-import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
-import ru.geekbrains.cloudservice.model.FilesList;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,28 +16,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class FileListViewService {
-    private final ClientMessageHandler clientMessageHandler;
-    private final List<FileInfo> localList;
-    private boolean updated;
+    private final DataModel dataModel;
 
     @Autowired
-    public FileListViewService(ClientMessageHandler clientMessageHandler) {
-        this.clientMessageHandler = clientMessageHandler;
-        this.localList = new CopyOnWriteArrayList<>();
-        this.updated = false;
+    public FileListViewService(DataModel dataModel) {
+        this.dataModel = dataModel;
     }
 
     //получаем список локальных файлов
-    public void getLocalFileList(Path path, Path relative) {
-        localList.clear();
-        sentServerFileListRequest(relative);
+    public void getLocalFileList(Path path) {
         try {
+            List<FileInfo> localList = new ArrayList<>();
             localList.addAll(Files.list(path)
                     .filter(p -> {
                         try {
@@ -51,13 +43,14 @@ public class FileListViewService {
                     })
                     .map(FileInfo::new)
                     .collect(Collectors.toList()));
+            dataModel.setFileInfos(localList);
         } catch (IOException e) {
             log.warn("get local file list exc");
         }
     }
 
     //получаем список файлов с сервера и объеденяем с локальным
-    public void updateFileListInfo(FilesList listFromServer) {
+    public void updateFileListInfo(FilesListMessage listFromServer) {
         try {
             List<FileInfoTo> list = listFromServer.getFileInfoTos();
             List<FileInfo> serverList = new ArrayList<>();
@@ -68,19 +61,19 @@ public class FileListViewService {
                 }
             }
             merge(serverList);
-            this.updated = true;
         } catch (Exception e) {
             log.warn("FileList updating exception {}", e.getMessage());
         }
     }
 
     private void merge(List<FileInfo> serverList) {
+        ObservableList<FileInfo> fileInfos = dataModel.getFileInfos();
         for (FileInfo i : serverList) {
-            if (!localList.contains(i)) {
+            if (!fileInfos.contains(i)) {
                 i.setUploadedStatus("air");
-                localList.add(i);
+                fileInfos.add(i);
             } else {
-                for (FileInfo j : localList) {
+                for (FileInfo j : fileInfos) {
                     if (j.equals(i)) {
                         j.setUploadedStatus("yes");
                         break;
@@ -88,30 +81,18 @@ public class FileListViewService {
                 }
             }
         }
-        System.out.println(localList);
     }
-
-    //запрос списка файла с сервера
-    private void sentServerFileListRequest(Path relativizedPath) {
-        if (relativizedPath.toString().equals("")) {
-            clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList("root")));
-            return;
-        }
-        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesList(relativizedPath.toString())));
-        this.updated = false;
-    }
-
 
     public void addFileListFromServer(ResponseMessage responseMessage) {
-        FilesList listInfo = (FilesList) responseMessage.getAbstractMessageObject();
-        updateFileListInfo(listInfo);
+        FilesListMessage listInfo = (FilesListMessage) responseMessage.getAbstractMessageObject();
+
+        if (listInfo.getParentPath().equals(dataModel.getRelativePath())) {
+            updateFileListInfo(listInfo);
+        }
     }
 
-    public List<FileInfo> getFileListForView() {
-        return this.localList;
-    }
-
-    public boolean isUpdated() {
-        return updated;
+    public void updateListView(Path path) {
+        dataModel.setRelativePath(path);
+        getLocalFileList(path);
     }
 }

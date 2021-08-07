@@ -8,6 +8,8 @@ public enum FileOperationRequestType  implements CommandType {
 
     SAVE_DIRECTORY,
 
+    DELETE_FILE,
+
     DOWNLOAD_FILE,
     DOWNLOAD_FILE_LIST,
 

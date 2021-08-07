@@ -35,5 +35,6 @@
             <Font size="18.0" />
          </font>
       </JFXButton>
+      <Label fx:id="regWrong" layoutX="420.0" layoutY="297.0" text="Registration wrong" textFill="#ff3939" visible="false" />
     </children>
 </AnchorPane>

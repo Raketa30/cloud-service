@@ -26,11 +26,8 @@ public class FilesOperationResponseHandler {
 
         switch (fileOperationRequestType) {
             case FILE_READY_TO_SAVE:
-                clientFileService.sendFileToServer(responseMessage);
-                break;
-
             case DIRECTORY_READY_TO_SAVE:
-                clientFileService.sendDirectoryToServer(responseMessage);
+                clientFileService.sendFileToServer(responseMessage);
                 break;
 
             case FILE_ALREADY_EXIST:

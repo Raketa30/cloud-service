@@ -19,8 +19,8 @@ import java.nio.file.Paths;
 
 @Slf4j
 @Component
-@FxmlView("modallAddFile.fxml")
-public class ModalPickFile {
+@FxmlView("modalAddFile.fxml")
+public class ModalPickFileController {
 
     private final ClientFileService clientFileService;
     private final MainController mainController;
@@ -36,7 +36,7 @@ public class ModalPickFile {
     private TextField pathTextField;
 
     @Autowired
-    public ModalPickFile(ClientFileService clientFileService, MainController mainController, FxWeaver fxWeaver) {
+    public ModalPickFileController(ClientFileService clientFileService, MainController mainController, FxWeaver fxWeaver) {
         this.clientFileService = clientFileService;
         this.mainController = mainController;
         this.fxWeaver = fxWeaver;
@@ -77,7 +77,6 @@ public class ModalPickFile {
 
     public void confirmUserFolderPath(ActionEvent actionEvent) {
         clientFileService.copyFileToUserFolder(Paths.get(pathTextField.getText()), mainController.getPath());
-        fxWeaver.loadController(MainController.class).show();
         this.stage.hide();
         mainController.updateList(mainController.getPath());
     }

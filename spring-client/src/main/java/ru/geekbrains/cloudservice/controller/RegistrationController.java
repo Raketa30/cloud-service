@@ -4,6 +4,7 @@ import com.jfoenix.controls.JFXButton;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
@@ -14,6 +15,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
 
 import java.io.File;
@@ -25,17 +27,21 @@ import java.util.ResourceBundle;
 @FxmlView("register.fxml")
 public class RegistrationController {
     private final ClientAuthService clientAuthService;
-
-    private FxWeaver fxWeaver;
+    private final DataModel dataModel;
+    private final FxWeaver fxWeaver;
+    @FXML
+    public Label regWrong;
 
     @FXML
     private AnchorPane mainDialog;
 
+    @FXML
     private Stage stage;
 
     @Autowired
-    public RegistrationController(ClientAuthService clientAuthService, FxWeaver fxWeaver) {
+    public RegistrationController(ClientAuthService clientAuthService, DataModel dataModel, FxWeaver fxWeaver) {
         this.clientAuthService = clientAuthService;
+        this.dataModel = dataModel;
         this.fxWeaver = fxWeaver;
     }
 
@@ -85,22 +91,7 @@ public class RegistrationController {
 
         if (validateCredentials(username, password, passwordRepeat)) {
             clientAuthService.registerUser(username, password);
-            clientAuthService.setUserFolderPath(folderPath.getText());
-
-            while (clientAuthService.isRegistrationConfirm() || clientAuthService.isRegistrationDecline()) {
-                if (clientAuthService.isRegistrationConfirm()) {
-                    log.info("userpath setted{}", folderPath.getText());
-                    fxWeaver.loadController(AuthController.class).show();
-                    break;
-                }
-
-                if (clientAuthService.isRegistrationDecline()) {
-                    break;
-                }
-            }
-
         }
-
     }
 
     public void chooseFolder(ActionEvent actionEvent) {
@@ -127,6 +118,10 @@ public class RegistrationController {
 
     public void backToPreviosStage(ActionEvent actionEvent) {
         fxWeaver.loadController(AuthController.class).show();
+    }
+
+    public void registrationWrong() {
+        regWrong.setVisible(true);
     }
 }
 

@@ -42,10 +42,6 @@ public class ServerFilesOperationHandler {
                     fileServerService.saveFile(requestMessage);
                     break;
 
-                case SAVE_DIRECTORY:
-                    fileServerService.saveDirectory(requestMessage);
-                    break;
-
                 case DOWNLOAD_FILE:
                     fileServerService.downloadFile(requestMessage);
                     break;

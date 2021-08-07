@@ -5,11 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.api.ClientMessageHandler;
+import ru.geekbrains.cloudservice.commands.FilesListMessage;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
 
 import java.io.IOException;
@@ -21,12 +23,12 @@ import java.time.LocalDateTime;
 @Service
 public class ClientFileService {
     private final ClientMessageHandler clientMessageHandler;
-    private final ClientAuthService clientAuthService;
+    private final DataModel dataModel;
 
     @Autowired
-    public ClientFileService(ClientMessageHandler clientMessageHandler, ClientAuthService clientAuthService) {
+    public ClientFileService(ClientMessageHandler clientMessageHandler, DataModel dataModel) {
         this.clientMessageHandler = clientMessageHandler;
-        this.clientAuthService = clientAuthService;
+        this.dataModel = dataModel;
     }
 
     public void sendRequestForFileSaving(FileInfo localFileInfo) {
@@ -55,26 +57,19 @@ public class ClientFileService {
         }
     }
 
-    public void sendDirectoryToServer(ResponseMessage responseMessage) {
-        FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
-        Path filePath = getFilePath(responseBody);
-        FileInfo fileInfo = new FileInfo(filePath);
-        fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(filePath));
-        FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
-        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), fileInfoTo));
-    }
-
     public void sendRequestForFileDownloading(FileInfo fileInfo) {
         FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
         clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_FILE), fileInfoTo));
     }
 
     public void sendRequestForDeleting(FileInfo fileInfo) {
+        FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
+        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DELETE_FILE), fileInfoTo));
     }
 
-
-    private Path getFilePath(FileInfoTo responseBody) {
-        return clientAuthService.getUserFolderPath().resolve(responseBody.getFilePath());
+    private Path getFilePath(FileInfoTo to) {
+        Path root = Paths.get(dataModel.getRootPath());
+        return root.resolve(to.getFilePath());
     }
 
     private FileInfoTo getFileInfoTo(FileInfo localFileInfo) {
@@ -110,6 +105,35 @@ public class ClientFileService {
             log.warn("file copy ex {}");
         }
     }
+
+    public void createNewFolder(String text, Path path) {
+        try {
+            Files.createDirectory(path.resolve(text));
+            updateFileList(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteLocalFile(Path currentPath) {
+        try {
+            Files.deleteIfExists(currentPath);
+            updateFileList(currentPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateFileList(Path currentPath) {
+        Path root = Paths.get(dataModel.getRootPath());
+        if (currentPath.equals(root)) {
+            clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage("root")));
+        } else {
+            Path message = root.relativize(currentPath);
+            clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(message.toString())));
+        }
+    }
+
 }
 
 

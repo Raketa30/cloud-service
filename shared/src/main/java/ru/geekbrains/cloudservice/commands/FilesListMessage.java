@@ -1,20 +1,19 @@
-package ru.geekbrains.cloudservice.model;
+package ru.geekbrains.cloudservice.commands;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import ru.geekbrains.cloudservice.commands.AbstractMessage;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
 
 import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-public class FilesList extends AbstractMessage {
+public class FilesListMessage extends AbstractMessage {
     private List<FileInfoTo> fileInfoTos;
     private String parentPath;
 
-    public FilesList(String parentPath) {
+    public FilesListMessage(String parentPath) {
         this.parentPath = parentPath;
     }
 }

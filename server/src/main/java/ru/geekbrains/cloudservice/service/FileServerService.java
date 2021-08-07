@@ -3,12 +3,12 @@ package ru.geekbrains.cloudservice.service;
 import io.netty.channel.DefaultFileRegion;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.api.ServerMessageHandler;
+import ru.geekbrains.cloudservice.commands.FilesListMessage;
 import ru.geekbrains.cloudservice.commands.RequestMessage;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
-import ru.geekbrains.cloudservice.model.FilesList;
 import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 
@@ -42,8 +42,7 @@ public class FileServerService {
         clientHandler.createFileHandler(fullPath, fileInfoTo, userOperationalPathsRepo);
     }
 
-    public void saveDirectory(RequestMessage requestMessage) {
-        FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
+    private void saveDirectory(FileInfoTo fileInfoTo) {
         fileInfoTo.setUserId(activeUser.getId());
         Path fullPath = getFullPath(fileInfoTo);
         try {
@@ -72,7 +71,7 @@ public class FileServerService {
             clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo));
         } else {
             if (fileInfoTo.getFileType().equals("folder")) {
-                clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.DIRECTORY_READY_TO_SAVE), fileInfoTo));
+                saveDirectory(fileInfoTo);
             } else {
                 clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_READY_TO_SAVE), fileInfoTo));
             }
@@ -82,13 +81,14 @@ public class FileServerService {
     //метод возвращающий список файлов по указанной ссылке
     public void getFileInfoListForView(RequestMessage requestMessage) {
         //подразумевается что сюда прилетает папка родитель
-        FilesList filesList = (FilesList) requestMessage.getAbstractMessageObject();
-        String parentPath = filesList.getParentPath();
+        FilesListMessage filesListMessage = (FilesListMessage) requestMessage.getAbstractMessageObject();
+        String parentPath = filesListMessage.getParentPath();
         Optional<List<FileInfoTo>> optionalFileInfos = userOperationalPathsRepo.findFilesByParentPath(parentPath);
 
         if (optionalFileInfos.isPresent()) {
-            filesList.setFileInfoTos(optionalFileInfos.get());
-            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_LIST_SENT), filesList));
+            filesListMessage.setFileInfoTos(optionalFileInfos.get());
+            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_LIST_SENT), filesListMessage));
+            log.info("file_list sent");
         } else {
             clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.EMPTY_LIST)));
         }

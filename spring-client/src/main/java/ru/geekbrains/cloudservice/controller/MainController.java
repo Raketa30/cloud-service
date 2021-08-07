@@ -1,13 +1,18 @@
 package ru.geekbrains.cloudservice.controller;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -17,19 +22,16 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
-import ru.geekbrains.cloudservice.service.ClientAuthService;
 import ru.geekbrains.cloudservice.service.ClientFileService;
 import ru.geekbrains.cloudservice.service.FileListViewService;
 
-import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -37,14 +39,12 @@ import java.util.stream.Collectors;
 public class MainController {
     private final FxWeaver fxWeaver;
 
-    private Path currentPath;
-
     @FXML
     public TextField pathField;
     //Сервисы
-    private final ClientAuthService clientAuthService;
     private final ClientFileService clientFileService;
     private final FileListViewService fileListViewService;
+    private final DataModel dataModel;
 
     @FXML
     private BorderPane mainDialog;
@@ -54,18 +54,6 @@ public class MainController {
 
     @FXML
     private TableView<FileInfo> filesList;
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
-
-    @FXML
-    private Label freeSpace;
-
-    @FXML
-    private JFXButton folderUpButton;
 
     @FXML
     private TableColumn<FileInfo, Long> fileSizeColumn;
@@ -80,21 +68,22 @@ public class MainController {
 
     @FXML
     private TableColumn<FileInfo, String> onAirColumn;
+
     @FXML
     private TableColumn<FileInfo, String> upDownColumn;
 
     @FXML
     private TableColumn<FileInfo, String> fileLastModifiedColumn;
 
-    @FXML
-    private JFXListView<String> rootFoldersList;
+    private Path currentPath;
+    private Path root;
 
     @Autowired
-    public MainController(FxWeaver fxWeaver, ClientAuthService clientAuthService, ClientFileService clientFileService, FileListViewService fileListViewService) {
+    public MainController(FxWeaver fxWeaver, ClientFileService clientFileService, FileListViewService fileListViewService, DataModel dataModel) {
         this.fxWeaver = fxWeaver;
-        this.clientAuthService = clientAuthService;
         this.clientFileService = clientFileService;
         this.fileListViewService = fileListViewService;
+        this.dataModel = dataModel;
     }
 
     @FXML
@@ -102,6 +91,14 @@ public class MainController {
 
     @FXML
     void initialize() {
+        SimpleStringProperty relative = dataModel.relativePathProperty();
+        pathField.setText(relative.getValue());
+        relative.addListener((observable, oldValue, newValue) -> {
+            System.out.println(oldValue);
+            System.out.println(newValue);
+            pathField.setText("/" + newValue);
+        });
+
         fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType()));
         fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
         fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getFileSize()));
@@ -124,31 +121,23 @@ public class MainController {
         //показываем статус загруженного файл
         //https://stackoverflow.com/questions/42662807/javafx-tablecolumn-cell-change - спасибо ребятам
         onAirColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
-
         //кнопки отправки/загрузки файла/папки в строке
         upDownColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUploadedStatus()));
 
         deleteColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
 
-        try {
-            rootFoldersList.getItems().addAll(Files.list(clientAuthService.getUserFolderPath())
-                    .filter(path -> new FileInfo(path).getFileType().equals("folder"))
-                    .map(s -> new FileInfo(s).getFilename())
-                    .collect(Collectors.toList())
-            );
-
-        } catch (IOException e) {
-            log.warn("Нен удалось отобразить список папок в рутовом каталоге");
-        }
-        //переходим в папки из рутового каталога
-        rootFoldersList.setOnMouseClicked(mouseEvent -> {
-            currentPath = clientAuthService.getUserFolderPath().resolve(getSelectedFolder());
-            updateList(currentPath);
-        });
-
         fileLastModifiedColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()
                 .getLastModified()
                 .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
+
+
+        ObservableList<FileInfo> fileListObserver = dataModel.getFileInfos();
+        filesList.getItems().addAll(fileListObserver);
+        fileListObserver.addListener((ListChangeListener<FileInfo>) c -> {
+            filesList.getItems().clear();
+            filesList.getItems().addAll(c.getList());
+            filesList.sort();
+        });
 
         filesList.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
@@ -158,13 +147,10 @@ public class MainController {
                 }
             }
         });
-        currentPath = clientAuthService.getUserFolderPath();
-        updateList(currentPath);
-        update();
-    }
 
-    public Path getPath() {
-        return this.currentPath;
+        root = Paths.get(dataModel.getRootPath());
+        currentPath = root;
+        updateList(root);
     }
 
     private void setAirStatus() {
@@ -203,9 +189,7 @@ public class MainController {
 
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                            fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
                             clientFileService.sendRequestForFileDownloading(fileInfo);
-                            updateList(currentPath);
                         });
                     }
 
@@ -220,9 +204,8 @@ public class MainController {
 
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                            fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
+                            fileInfo.setRelativePath(root.relativize(fileInfo.getPath()));
                             clientFileService.sendRequestForFileSaving(fileInfo);
-                            updateList(currentPath);
                         });
                     }
                 }
@@ -246,9 +229,8 @@ public class MainController {
 
                     button.setOnMouseClicked(event -> {
                         FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                        fileInfo.setRelativePath(clientAuthService.getUserFolderPath().relativize(fileInfo.getPath()));
+                        fileInfo.setRelativePath(root.relativize(fileInfo.getPath()));
                         clientFileService.sendRequestForDeleting(fileInfo);
-                        updateList(currentPath);
                     });
                 }
             }
@@ -260,17 +242,9 @@ public class MainController {
     }
 
     public void updateList(Path path) {
-        Path relativizedPath = clientAuthService.getUserFolderPath().relativize(path);
         try {
-            pathField.setText("/" + relativizedPath.normalize().toString());
-            fileListViewService.getLocalFileList(path, relativizedPath);
-            filesList.getItems().clear();
-            if (!fileListViewService.getFileListForView().isEmpty() && fileListViewService.isUpdated()) {
-                filesList.getItems().addAll(
-                        fileListViewService.getFileListForView()
-                );
-            }
-            filesList.sort();
+            fileListViewService.updateListView(path);
+            clientFileService.updateFileList(path);
             setAirStatus();
             setDeleteButtons();
             setDownloadUploadButton();
@@ -280,7 +254,7 @@ public class MainController {
     }
 
     public void btnPathUpAction(ActionEvent actionEvent) {
-        if (currentPath.equals(clientAuthService.getUserFolderPath())) {
+        if (currentPath.equals(root)) {
             return;
         }
         Path upPath = currentPath.getParent();
@@ -295,10 +269,6 @@ public class MainController {
         return filesList.getSelectionModel().getSelectedItem().getFilename();
     }
 
-    public String getSelectedFolder() {
-        return rootFoldersList.getSelectionModel().getSelectedItem();
-    }
-
     public Path getCurrentPath() {
         if (Files.isDirectory(currentPath.resolve(getSelectedFilename()))) {
             currentPath = currentPath.resolve(getSelectedFilename());
@@ -307,41 +277,32 @@ public class MainController {
     }
 
     public void show() {
-        this.stage = new Stage();
-        stage.setScene(new Scene(mainDialog));
-        stage.setTitle(clientAuthService.getUserTo().getUsername());
-        stage.setResizable(false);
-        connectionStatusLamp.setFill(Color.GREEN);
-        stage.show();
-    }
-
-
-    private void update() {
-        Thread updateThread = new Thread(() -> {
-            while (true) {
-                if(fileListViewService.isUpdated()) {
-                    updateList(currentPath);
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+        Platform.runLater(() -> {
+            this.stage = new Stage();
+            stage.setScene(new Scene(mainDialog));
+            stage.setTitle("cloud");
+            stage.setResizable(false);
+            connectionStatusLamp.setFill(Color.GREEN);
+            stage.show();
         });
-        updateThread.setDaemon(true);
     }
 
+    //удалить локально
     public void deleteFile(ActionEvent actionEvent) {
-
+        clientFileService.deleteLocalFile(getCurrentPath());
     }
 
     public void addNewFolder(ActionEvent actionEvent) {
-
+        fxWeaver.loadController(EnterNameController.class).show();
     }
 
     public void addNewFile(ActionEvent actionEvent) {
-        fxWeaver.loadController(ModalPickFile.class).show();
+        fxWeaver.loadController(ModalPickFileController.class).show();
+    }
+
+
+    public Path getPath() {
+        return this.currentPath;
     }
 }
 

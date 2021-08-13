@@ -9,54 +9,44 @@ import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.model.User;
-import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
+import ru.geekbrains.cloudservice.util.Factory;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class FileServerService {
     private final ServerMessageHandler clientHandler;
-    private final UserOperationalPathsRepo userOperationalPathsRepo;
-    private final Path serverRoot;
-    private User activeUser;
+    private Path userFolderPath;
 
     public FileServerService(ServerMessageHandler clientHandler) {
         this.clientHandler = clientHandler;
-        this.userOperationalPathsRepo = new UserOperationalPathsRepo();
-        serverRoot = Paths.get("/Users/duckpool/dev/courses/Geekbrains/cloud-service/server/main_root_folder/");
     }
 
     public void saveFile(RequestMessage requestMessage) {
         FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
-        fileInfoTo.setUserId(activeUser.getId());
         Path fullPath = getFullPath(fileInfoTo);
-
-        clientHandler.createFileHandler(fullPath, fileInfoTo, userOperationalPathsRepo);
+        clientHandler.createFileHandler(fullPath, fileInfoTo);
     }
 
     private void saveDirectory(FileInfoTo fileInfoTo) {
-        fileInfoTo.setUserId(activeUser.getId());
         Path fullPath = getFullPath(fileInfoTo);
         try {
-            Optional<FileInfoTo> fileInfoFromDataBase = userOperationalPathsRepo.findFileInfoByRelativePath(fileInfoTo.getFilePath());
-            if (fileInfoFromDataBase.isPresent()) {
+            if (Files.exists(fullPath)) {
                 clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo));
-                if (!Files.exists(fullPath)) {
-                    Files.createDirectory(fullPath);
-                }
             } else {
                 if (!Files.exists(fullPath)) {
                     Files.createDirectory(fullPath);
                 }
-                userOperationalPathsRepo.saveFileInfo(fileInfoTo);
             }
         } catch (IOException e) {
             log.warn("Saving file throw exception {}", e.getMessage());
@@ -65,8 +55,8 @@ public class FileServerService {
 
     public void checkReceivedFileInfo(RequestMessage requestMessage) {
         FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
-        Optional<FileInfoTo> fileInfoFromDataBase = userOperationalPathsRepo.findFileInfoByRelativePath(fileInfoTo.getFilePath());
-        if (fileInfoFromDataBase.isPresent()) {
+        Path fullPath = getFullPath(fileInfoTo);
+        if (Files.exists(fullPath)) {
             //такой файл существует
             clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo));
         } else {
@@ -80,39 +70,75 @@ public class FileServerService {
 
     //метод возвращающий список файлов по указанной ссылке
     public void getFileInfoListForView(RequestMessage requestMessage) {
-        //подразумевается что сюда прилетает папка родитель
         FilesListMessage filesListMessage = (FilesListMessage) requestMessage.getAbstractMessageObject();
-        String parentPath = filesListMessage.getParentPath();
-        Optional<List<FileInfoTo>> optionalFileInfos = userOperationalPathsRepo.findFilesByParentPath(parentPath);
-
-        if (optionalFileInfos.isPresent()) {
-            filesListMessage.setFileInfoTos(optionalFileInfos.get());
-            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_LIST_SENT), filesListMessage));
-            log.info("file_list sent");
-        } else {
-            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.EMPTY_LIST)));
-        }
+        String relative = filesListMessage.getParentPath();
+        Path parent = getServerPath(relative);
+        List<FileInfo> fileInfo = getFileInfoList(parent);
+        List<FileInfoTo> fileInfoTos = getFileInfoToList(fileInfo);
+        FilesListMessage message = new FilesListMessage(relative);
+        message.setFileInfoTos(fileInfoTos);
+        clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_LIST_SENT), message));
     }
 
-    public void setActiveUser(User activeUser) {
-        this.activeUser = activeUser;
+    private List<FileInfoTo> getFileInfoToList(List<FileInfo> fileInfo) {
+        List<FileInfoTo> list = new ArrayList<>();
+        for (FileInfo info : fileInfo) {
+            list.add(getFileInfoTo(info));
+        }
+        return list;
+    }
+
+    private FileInfoTo getFileInfoTo(FileInfo localFileInfo) {
+        String fileName = localFileInfo.getFilename();
+        String filePath = userFolderPath.relativize(localFileInfo.getPath()).toString();
+        String fileType = localFileInfo.getFileType();
+        Long fileSize = localFileInfo.getFileSize();
+        LocalDateTime dateModified = localFileInfo.getLastModified();
+
+        return new FileInfoTo(fileName, filePath, fileType, fileSize, dateModified);
+    }
+
+    private List<FileInfo> getFileInfoList(Path parent) {
+        List<FileInfo> fileInfoList = new ArrayList<>();
+        try {
+
+            fileInfoList.addAll(Files.list(parent)
+                    .filter(p -> {
+                        try {
+                            return !Files.isHidden(p);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return false;
+                    })
+                    .map(FileInfo::new)
+                    .collect(Collectors.toList()));
+        } catch (IOException e) {
+            log.warn("get server file list exc");
+        }
+        System.out.println(fileInfoList);
+        return fileInfoList;
+    }
+
+    public void setUserFolderPath(User activeUser) {
+        Path serverRoot = Factory.getServerFolderPath();
+        this.userFolderPath = serverRoot.resolve(activeUser.getServerRootPath());
     }
 
     private Path getFullPath(FileInfoTo fileInfoTo) {
-        return serverRoot
-                .resolve(activeUser.getServerRootPath())
+        return userFolderPath
                 .resolve(fileInfoTo.getFilePath());
+    }
+
+    private Path getServerPath(String parent) {
+        return userFolderPath
+                .resolve(parent);
     }
 
     public void downloadFile(RequestMessage requestMessage) {
         FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
-        Optional<FileInfoTo> fileInfoFromDataBase = userOperationalPathsRepo.findFileInfoByRelativePath(fileInfoTo.getFilePath());
-
-        if(fileInfoFromDataBase.isPresent()) {
-            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SENT), fileInfoTo));
-            sendFileToClient(fileInfoTo, getFullPath(fileInfoTo));
-        }
-
+        clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SENT), fileInfoTo));
+        sendFileToClient(fileInfoTo, getFullPath(fileInfoTo));
     }
 
     private void sendFileToClient(FileInfoTo responseBody, Path filePath) {

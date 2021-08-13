@@ -79,16 +79,7 @@ public class ClientFileService {
         Long fileSize = localFileInfo.getFileSize();
         LocalDateTime dateModified = localFileInfo.getLastModified();
 
-        FileInfoTo fileInfo = new FileInfoTo(fileName, relativePath, fileType, fileSize, dateModified);
-
-        Path parentPath = Paths.get(relativePath).getParent();
-
-        if (parentPath == null) {
-            fileInfo.setParentPath("root");
-        } else {
-            fileInfo.setParentPath(parentPath.toString());
-        }
-        return fileInfo;
+        return new FileInfoTo(fileName, relativePath, fileType, fileSize, dateModified);
     }
 
     public void saveFileFromServer(ResponseMessage responseMessage) {
@@ -127,7 +118,7 @@ public class ClientFileService {
     public void updateFileList(Path currentPath) {
         Path root = Paths.get(dataModel.getRootPath());
         if (currentPath.equals(root)) {
-            clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage("root")));
+            clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage("")));
         } else {
             Path message = root.relativize(currentPath);
             clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(message.toString())));

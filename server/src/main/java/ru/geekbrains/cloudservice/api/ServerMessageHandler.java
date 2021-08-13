@@ -11,12 +11,12 @@ import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
-import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 import ru.geekbrains.cloudservice.service.AuthServerService;
 
 import java.nio.file.Path;
 
 @Slf4j
+@ChannelHandler.Sharable
 public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
     private final ServerAuthHandler serverAuthHandler;
     private final ServerFilesOperationHandler serverFilesOperationHandler;
@@ -91,11 +91,11 @@ public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         ctx.fireChannelActive();
-        log.warn(cause.getMessage());
+        cause.printStackTrace();
     }
 
-    public void createFileHandler(Path fullPath, FileInfoTo fileInfoTo, UserOperationalPathsRepo userOperationalPathsRepo) {
-        ServerFileHandler serverFileHandler = new ServerFileHandler(fullPath, fileInfoTo, userOperationalPathsRepo);
+    public void createFileHandler(Path fullPath, FileInfoTo fileInfoTo) {
+        ServerFileHandler serverFileHandler = new ServerFileHandler(fullPath, fileInfoTo);
         ChannelPipeline pipeline = channelHandlerContext.pipeline()
                 .addBefore("od", "fh", serverFileHandler);
         log.info(pipeline.toString());
@@ -104,9 +104,9 @@ public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
             serverFileHandler.channelRegistered(channelHandlerContext);
             serverFileHandler.channelActive(channelHandlerContext);
         } catch (Exception e) {
-            log.debug("server File Handler register error: {}", e.getMessage());
+            log.info("server File Handler register error: {}", e.getMessage());
         }
-        log.debug(pipeline.toString());
+        log.info(pipeline.toString());
     }
 
     public void sendFileToClient(DefaultFileRegion defaultFileRegion) {

@@ -85,7 +85,9 @@ public class FileListViewService {
 
     public void addFileListFromServer(ResponseMessage responseMessage) {
         FilesListMessage listInfo = (FilesListMessage) responseMessage.getAbstractMessageObject();
-
+        if(listInfo.getParentPath().equals("root")) {
+            listInfo.setParentPath("");
+        }
         if (listInfo.getParentPath().equals(dataModel.getRelativePath())) {
             updateFileListInfo(listInfo);
         }

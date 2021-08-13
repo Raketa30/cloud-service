@@ -130,7 +130,6 @@ public class MainController {
                 .getLastModified()
                 .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
 
-
         ObservableList<FileInfo> fileListObserver = dataModel.getFileInfos();
         filesList.getItems().addAll(fileListObserver);
         fileListObserver.addListener((ListChangeListener<FileInfo>) c -> {
@@ -139,6 +138,14 @@ public class MainController {
             filesList.sort();
         });
 
+//        filesList.setOnMouseClicked(mouseEvent -> {
+//            if (mouseEvent.getClickCount() == 2) {
+//                Path filePath = getCurrentPath();
+//                if (Files.isDirectory(filePath)) {
+//                    updateList(filePath);
+//                }
+//            }
+//        });
         filesList.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
                 Path filePath = getCurrentPath();
@@ -190,6 +197,7 @@ public class MainController {
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
                             clientFileService.sendRequestForFileDownloading(fileInfo);
+                            updateList(currentPath);
                         });
                     }
 
@@ -206,6 +214,7 @@ public class MainController {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
                             fileInfo.setRelativePath(root.relativize(fileInfo.getPath()));
                             clientFileService.sendRequestForFileSaving(fileInfo);
+                            updateList(currentPath);
                         });
                     }
                 }
@@ -289,7 +298,7 @@ public class MainController {
 
     //удалить локально
     public void deleteFile(ActionEvent actionEvent) {
-        clientFileService.deleteLocalFile(getCurrentPath());
+        clientFileService.deleteLocalFile(currentPath.resolve(getSelectedFilename()));
     }
 
     public void addNewFolder(ActionEvent actionEvent) {
@@ -299,7 +308,6 @@ public class MainController {
     public void addNewFile(ActionEvent actionEvent) {
         fxWeaver.loadController(ModalPickFileController.class).show();
     }
-
 
     public Path getPath() {
         return this.currentPath;

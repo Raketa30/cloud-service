@@ -8,7 +8,6 @@ import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
-import ru.geekbrains.cloudservice.repo.UserOperationalPathsRepo;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -22,13 +21,11 @@ import java.time.LocalDateTime;
 public class ServerFileHandler extends ChunkedWriteHandler {
     private final Path filePath;
     private final FileInfoTo fileInfoTo;
-    private final UserOperationalPathsRepo userOperationalPathsRepo;
 
-    public ServerFileHandler(Path filePath, FileInfoTo fileInfoTo, UserOperationalPathsRepo userOperationalPathsRepo) {
+    public ServerFileHandler(Path filePath, FileInfoTo fileInfoTo) {
         this.filePath = filePath;
         this.fileInfoTo = fileInfoTo;
         fileInfoTo.setLocalDateTime(LocalDateTime.now());
-        this.userOperationalPathsRepo = userOperationalPathsRepo;
     }
 
     @Override
@@ -61,7 +58,6 @@ public class ServerFileHandler extends ChunkedWriteHandler {
             }
 
             if (Files.size(filePath) == fileInfoTo.getSize()) {
-                userOperationalPathsRepo.saveFileInfo(fileInfoTo);
                 ctx.pipeline().remove(this);
             }
 

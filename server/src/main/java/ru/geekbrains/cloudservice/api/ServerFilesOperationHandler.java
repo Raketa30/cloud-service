@@ -26,7 +26,7 @@ public class ServerFilesOperationHandler {
             serverMessageHandler.sendResponse(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));
 
         } else {
-            fileServerService.setActiveUser(activeUser);
+            fileServerService.setUserFolderPath(activeUser);
             FileOperationRequestType fileOperationRequestType = (FileOperationRequestType) requestMessage.getRequest().getRequestCommandType();
 
             switch (fileOperationRequestType) {

@@ -16,12 +16,12 @@ import ru.geekbrains.cloudservice.service.ClientFileService;
 @Slf4j
 @Component
 @FxmlView("enterName.fxml")
-public class EnterNameController {
+public class FileNameController {
 
-    private final ClientFileService clientFileService;
-    private final MainController mainController;
     private final FxWeaver fxWeaver;
-    public AnchorPane folderName;
+    private final ClientFileService fileService;
+    @FXML
+    private AnchorPane folderName;
 
     @FXML
     private Stage stage;
@@ -30,10 +30,9 @@ public class EnterNameController {
     private TextField pathTextField;
 
     @Autowired
-    public EnterNameController(ClientFileService clientFileService, MainController mainController, FxWeaver fxWeaver) {
-        this.clientFileService = clientFileService;
-        this.mainController = mainController;
+    public FileNameController(FxWeaver fxWeaver, ClientFileService fileService) {
         this.fxWeaver = fxWeaver;
+        this.fileService = fileService;
     }
 
     @FXML
@@ -52,8 +51,10 @@ public class EnterNameController {
     }
 
     public void confirmUserFolderPath(ActionEvent actionEvent) {
-        clientFileService.createNewFolder(pathTextField.getText(), mainController.getPath());
+        String folderName = pathTextField.getText().trim();
+        if(!folderName.equals("")) {
+            fileService.createNewFolder(folderName);
+        }
         this.stage.hide();
-        mainController.updateList(mainController.getPath());
     }
 }

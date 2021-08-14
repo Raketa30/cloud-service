@@ -11,7 +11,7 @@ import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
-import ru.geekbrains.cloudservice.service.AuthServerService;
+import ru.geekbrains.cloudservice.service.ServerAuthService;
 
 import java.nio.file.Path;
 
@@ -26,8 +26,8 @@ public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
     @Setter
     private boolean isReady;
 
-    public ServerMessageHandler(AuthServerService authServerService) {
-        serverAuthHandler = new ServerAuthHandler(authServerService, this);
+    public ServerMessageHandler(ServerAuthService serverAuthService) {
+        serverAuthHandler = new ServerAuthHandler(serverAuthService, this);
         serverFilesOperationHandler = new ServerFilesOperationHandler(this);
     }
 
@@ -55,15 +55,15 @@ public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
             @Override
             public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
                 if (total < 0) { // total unknown
-                    log.debug(future.channel() + " Transfer progress: " + progress);
+                    log.info(future.channel() + " Transfer progress: " + progress);
                 } else {
-                    log.debug(future.channel() + " Transfer progress: " + progress + " / " + total);
+                    log.info(future.channel() + " Transfer progress: " + progress + " / " + total);
                 }
             }
 
             @Override
             public void operationComplete(ChannelProgressiveFuture future) {
-                log.debug(future.channel() + " Transfer complete.");
+                log.info(future.channel() + " Transfer complete.");
                 isReady = true;
             }
         });

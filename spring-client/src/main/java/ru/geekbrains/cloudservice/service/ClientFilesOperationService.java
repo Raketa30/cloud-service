@@ -9,6 +9,7 @@ import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
 import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
+import ru.geekbrains.cloudservice.model.UploadedStatus;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,16 +21,17 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class FileListViewService {
+public class ClientFilesOperationService {
     private final DataModel dataModel;
 
     @Autowired
-    public FileListViewService(DataModel dataModel) {
+    public ClientFilesOperationService(DataModel dataModel) {
         this.dataModel = dataModel;
     }
 
     //получаем список локальных файлов
-    public void getLocalFileList(Path path) {
+    public void getLocalFileList(FileInfo fileInfo) {
+        Path path = fileInfo.getPath();
         try {
             List<FileInfo> localList = new ArrayList<>();
             localList.addAll(Files.list(path)
@@ -44,6 +46,7 @@ public class FileListViewService {
                     .map(FileInfo::new)
                     .collect(Collectors.toList()));
             dataModel.setFileInfos(localList);
+            setLocalRelativePath(path);
         } catch (IOException e) {
             log.warn("get local file list exc");
         }
@@ -57,6 +60,7 @@ public class FileListViewService {
             if (!list.isEmpty()) {
                 for (FileInfoTo f : list) {
                     FileInfo local = new FileInfo(Paths.get(f.getFilePath()), f.getFileName(), f.getFileType(), f.getSize(), f.getLocalDateTime());
+                    local.setUploadedStatus(UploadedStatus.AIR);
                     serverList.add(local);
                 }
             }
@@ -70,12 +74,11 @@ public class FileListViewService {
         ObservableList<FileInfo> fileInfos = dataModel.getFileInfos();
         for (FileInfo i : serverList) {
             if (!fileInfos.contains(i)) {
-                i.setUploadedStatus("air");
                 fileInfos.add(i);
             } else {
                 for (FileInfo j : fileInfos) {
                     if (j.equals(i)) {
-                        j.setUploadedStatus("yes");
+                        j.setUploadedStatus(UploadedStatus.UPLOADED);
                         break;
                     }
                 }
@@ -85,16 +88,61 @@ public class FileListViewService {
 
     public void addFileListFromServer(ResponseMessage responseMessage) {
         FilesListMessage listInfo = (FilesListMessage) responseMessage.getAbstractMessageObject();
-        if(listInfo.getParentPath().equals("root")) {
-            listInfo.setParentPath("");
+        dataModel.setRelativePath(listInfo.getRelativePath());
+        dataModel.getFileInfos().clear();
+        Path local = Paths.get(dataModel.getRootPath()).resolve(listInfo.getRelativePath());
+        if (Files.exists(local)) {
+            getLocalFileList(new FileInfo(local));
         }
-        if (listInfo.getParentPath().equals(dataModel.getRelativePath())) {
-            updateFileListInfo(listInfo);
+        updateFileListInfo(listInfo);
+    }
+
+    public void updateLocalList(String relativePath) {
+        dataModel.setRelativePath(relativePath);
+        Path local = Paths.get(dataModel.getRootPath()).resolve(relativePath);
+        if (Files.exists(local)) {
+            getLocalFileList(new FileInfo(local));
         }
     }
 
-    public void updateListView(Path path) {
-        dataModel.setRelativePath(path);
-        getLocalFileList(path);
+    public boolean createNewFolder(String folderName) {
+        try {
+            Path path = getLocalPath(folderName);
+            if (!checkPath(path)) {
+                Files.createDirectory(path);
+                return true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean checkPath(Path path) {
+        return Files.exists(path);
+    }
+
+    public Path getLocalPath(String fileName) {
+        return Paths.get(dataModel.getRootPath()).resolve(dataModel.getRelativePath()).resolve(fileName);
+    }
+
+    public boolean isLocalFolder() {
+        return Files.exists(Paths.get(dataModel.getRootPath()).resolve(dataModel.getRelativePath()));
+    }
+
+    public String getRelativePath() {
+        return dataModel.getRelativePath();
+    }
+
+    public String getRelativePath(String fileName) {
+        return Paths.get(dataModel.getRelativePath()).resolve(fileName).toString();
+    }
+
+    private void setLocalRelativePath(Path path) {
+        if (dataModel.getRootPath().equals(path.toString())) {
+            return;
+        }
+        Path relative = Paths.get(dataModel.getRootPath()).relativize(path).getParent();
+        dataModel.setRelativePath(relative.toString());
     }
 }

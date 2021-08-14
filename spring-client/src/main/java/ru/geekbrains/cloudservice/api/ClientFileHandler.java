@@ -34,6 +34,7 @@ public class ClientFileHandler extends ChunkedWriteHandler {
         try {
             File file = filePath.toFile();
             if (!file.exists()) {
+                Files.createDirectories(filePath.getParent());
                 file.createNewFile();
             }
 
@@ -53,12 +54,14 @@ public class ClientFileHandler extends ChunkedWriteHandler {
             if (Files.size(filePath) == fileInfoTo.getSize()) {
                 log.warn("file received from server {}", fileInfoTo);
                 ctx.pipeline().remove(this);
+                channelInactive(ctx);
             }
 
         } catch (Exception e) {
             log.warn("File handler exception");
             log.warn("Problem with file receiving");
             Files.delete(filePath);
+            channelInactive(ctx);
             ctx.pipeline().remove(this);
         }
     }
@@ -71,5 +74,6 @@ public class ClientFileHandler extends ChunkedWriteHandler {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelInactive();
+        System.out.println("channel inactive");
     }
 }

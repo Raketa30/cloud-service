@@ -11,9 +11,9 @@ import java.util.List;
 @Setter
 public class FilesListMessage extends AbstractMessage {
     private List<FileInfoTo> fileInfoTos;
-    private String parentPath;
+    private String relativePath;
 
-    public FilesListMessage(String parentPath) {
-        this.parentPath = parentPath;
+    public FilesListMessage(String relativePath) {
+        this.relativePath = relativePath;
     }
 }

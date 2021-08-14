@@ -22,6 +22,9 @@ public class FileInfoTo extends AbstractMessage{
         this.localDateTime = localDateTime;
     }
 
+    public FileInfoTo() {
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

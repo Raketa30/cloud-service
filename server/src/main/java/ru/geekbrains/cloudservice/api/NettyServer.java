@@ -12,7 +12,7 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.service.AuthServerService;
+import ru.geekbrains.cloudservice.service.ServerAuthService;
 import ru.geekbrains.cloudservice.util.MyLogger;
 
 @Slf4j
@@ -26,7 +26,7 @@ public class NettyServer {
     public void run() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        AuthServerService authServerService = new AuthServerService();
+        ServerAuthService serverAuthService = new ServerAuthService();
 
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -40,7 +40,7 @@ public class NettyServer {
                                     .addLast("oe", new ObjectEncoder())
                                     //In
                                     .addLast("od", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)))
-                                    .addLast("2", new ServerMessageHandler(authServerService));
+                                    .addLast("2", new ServerMessageHandler(serverAuthService));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)

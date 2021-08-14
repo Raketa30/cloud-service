@@ -24,11 +24,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class FileServerService {
+public class ServerFileService {
     private final ServerMessageHandler clientHandler;
     private Path userFolderPath;
 
-    public FileServerService(ServerMessageHandler clientHandler) {
+    public ServerFileService(ServerMessageHandler clientHandler) {
         this.clientHandler = clientHandler;
     }
 
@@ -38,32 +38,14 @@ public class FileServerService {
         clientHandler.createFileHandler(fullPath, fileInfoTo);
     }
 
-    private void saveDirectory(FileInfoTo fileInfoTo) {
-        Path fullPath = getFullPath(fileInfoTo);
-        try {
-            if (Files.exists(fullPath)) {
-                clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo));
-            } else {
-                if (!Files.exists(fullPath)) {
-                    Files.createDirectory(fullPath);
-                }
-            }
-        } catch (IOException e) {
-            log.warn("Saving file throw exception {}", e.getMessage());
-        }
-    }
-
-    public void checkReceivedFileInfo(RequestMessage requestMessage) {
+    public void saveDirectory(RequestMessage requestMessage) {
         FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
         Path fullPath = getFullPath(fileInfoTo);
-        if (Files.exists(fullPath)) {
-            //такой файл существует
-            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_ALREADY_EXIST), fileInfoTo));
-        } else {
-            if (fileInfoTo.getFileType().equals("folder")) {
-                saveDirectory(fileInfoTo);
-            } else {
-                clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_READY_TO_SAVE), fileInfoTo));
+        if (Files.notExists(fullPath)) {
+            try {
+                Files.createDirectory(fullPath);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -71,16 +53,29 @@ public class FileServerService {
     //метод возвращающий список файлов по указанной ссылке
     public void getFileInfoListForView(RequestMessage requestMessage) {
         FilesListMessage filesListMessage = (FilesListMessage) requestMessage.getAbstractMessageObject();
-        String relative = filesListMessage.getParentPath();
-        Path parent = getServerPath(relative);
-        List<FileInfo> fileInfo = getFileInfoList(parent);
-        List<FileInfoTo> fileInfoTos = getFileInfoToList(fileInfo);
-        FilesListMessage message = new FilesListMessage(relative);
-        message.setFileInfoTos(fileInfoTos);
-        clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_LIST_SENT), message));
+        Path serverPath = getServerPath(filesListMessage.getRelativePath());
+        if (Files.notExists(serverPath)) {
+            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_NOT_EXIST), filesListMessage));
+        } else {
+            List<FileInfoTo> fileInfoTos = getFileInfoToList(serverPath);
+            filesListMessage.setFileInfoTos(fileInfoTos);
+            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_LIST_SENT), filesListMessage));
+        }
     }
 
-    private List<FileInfoTo> getFileInfoToList(List<FileInfo> fileInfo) {
+    public void folderUp(RequestMessage requestMessage) {
+        FilesListMessage filesListMessage = (FilesListMessage) requestMessage.getAbstractMessageObject();
+        Path serverPath = getServerPath(filesListMessage.getRelativePath());
+        Path parent = serverPath.getParent();
+        List<FileInfoTo> fileInfoTos = getFileInfoToList(parent);
+        filesListMessage.setFileInfoTos(fileInfoTos);
+        String relative = userFolderPath.relativize(parent).toString();
+        filesListMessage.setRelativePath(relative);
+        clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_LIST_SENT), filesListMessage));
+    }
+
+    private List<FileInfoTo> getFileInfoToList(Path parent) {
+        List<FileInfo> fileInfo = getFileInfoList(parent);
         List<FileInfoTo> list = new ArrayList<>();
         for (FileInfo info : fileInfo) {
             list.add(getFileInfoTo(info));
@@ -141,6 +136,27 @@ public class FileServerService {
         sendFileToClient(fileInfoTo, getFullPath(fileInfoTo));
     }
 
+    public void downloadDirectory(RequestMessage requestMessage) {
+        FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
+        Path fullPath = getFullPath(fileInfoTo);
+        if (Files.isDirectory(fullPath)) {
+            clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.DIRECTORY_SENT), fileInfoTo));
+            try {
+                Files.walk(fullPath).forEach(p -> {
+                    FileInfoTo file = getFileInfoTo(new FileInfo(p));
+                    if (Files.isDirectory(p)) {
+                        clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.DIRECTORY_SENT), file));
+                    } else {
+                        clientHandler.sendResponse(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SENT), file));
+                        sendFileToClient(file, p);
+                    }
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void sendFileToClient(FileInfoTo responseBody, Path filePath) {
         try {
             clientHandler.sendFileToClient(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()));
@@ -148,4 +164,23 @@ public class FileServerService {
             log.warn("file sending ex {}", e.getMessage());
         }
     }
+
+    public void deleteFile(RequestMessage requestMessage) {
+        FileInfoTo fileInfoTo = (FileInfoTo) requestMessage.getAbstractMessageObject();
+        Path fullPath = getFullPath(fileInfoTo);
+        try {
+            Files.walk(fullPath).forEach(p -> {
+                try {
+                    Files.deleteIfExists(p);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            Files.deleteIfExists(fullPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

@@ -22,7 +22,7 @@ public class FileInfo extends AbstractMessage {
     private String fileType;
     private Long fileSize;
     private LocalDateTime lastModified;
-    private String uploadedStatus;
+    private UploadedStatus uploadedStatus;
 
     public FileInfo(Path path) {
         this.path = path;
@@ -41,7 +41,7 @@ public class FileInfo extends AbstractMessage {
                     ZoneOffset.ofHours(0));
         } catch (IOException e) {
         }
-        uploadedStatus = "not";
+        uploadedStatus = UploadedStatus.NOT_UPLOADED;
     }
 
     public FileInfo(Path relativePath, String filename, String fileType, Long fileSize, LocalDateTime lastModified) {

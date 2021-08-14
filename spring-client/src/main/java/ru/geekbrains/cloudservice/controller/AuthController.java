@@ -96,7 +96,7 @@ public class AuthController {
     public void loginOk() {
         String path = dataModel.getRootPath();
         if (path.equals("empty")) {
-            fxWeaver.loadController(ModalPickFolder.class).show();
+            fxWeaver.loadController(NewFolderController.class).show();
         } else {
             fxWeaver.loadController(MainController.class).show();
         }

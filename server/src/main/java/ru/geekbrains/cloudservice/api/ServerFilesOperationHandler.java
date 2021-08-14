@@ -7,16 +7,16 @@ import ru.geekbrains.cloudservice.commands.auth.AuthResponse;
 import ru.geekbrains.cloudservice.commands.auth.AuthResponseType;
 import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
 import ru.geekbrains.cloudservice.model.User;
-import ru.geekbrains.cloudservice.service.FileServerService;
+import ru.geekbrains.cloudservice.service.ServerFileService;
 
 @Slf4j
 public class ServerFilesOperationHandler {
-    private final FileServerService fileServerService;
+    private final ServerFileService serverFileService;
     private final ServerMessageHandler serverMessageHandler;
 
     public ServerFilesOperationHandler(ServerMessageHandler serverMessageHandler) {
 
-        fileServerService = new FileServerService(serverMessageHandler);
+        serverFileService = new ServerFileService(serverMessageHandler);
         this.serverMessageHandler = serverMessageHandler;
     }
 
@@ -26,27 +26,36 @@ public class ServerFilesOperationHandler {
             serverMessageHandler.sendResponse(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_WRONG)));
 
         } else {
-            fileServerService.setUserFolderPath(activeUser);
+            serverFileService.setUserFolderPath(activeUser);
             FileOperationRequestType fileOperationRequestType = (FileOperationRequestType) requestMessage.getRequest().getRequestCommandType();
 
             switch (fileOperationRequestType) {
                 case FILES_LIST:
-                    fileServerService.getFileInfoListForView(requestMessage);
-                    break;
-
-                case SAVE_FILE_REQUEST:
-                    fileServerService.checkReceivedFileInfo(requestMessage);
+                    serverFileService.getFileInfoListForView(requestMessage);
                     break;
 
                 case SAVE_FILE:
-                    fileServerService.saveFile(requestMessage);
+                    serverFileService.saveFile(requestMessage);
+                    break;
+
+                case SAVE_DIRECTORY:
+                    serverFileService.saveDirectory(requestMessage);
+                    break;
+
+                case DELETE_FILE:
+                    serverFileService.deleteFile(requestMessage);
                     break;
 
                 case DOWNLOAD_FILE:
-                    fileServerService.downloadFile(requestMessage);
+                    serverFileService.downloadFile(requestMessage);
                     break;
 
-                case DOWNLOAD_FILE_LIST:
+                case DOWNLOAD_DIRECTORY:
+                    serverFileService.downloadDirectory(requestMessage);
+                    break;
+
+                case FOLDER_UP:
+                    serverFileService.folderUp(requestMessage);
                     break;
             }
         }

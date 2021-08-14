@@ -11,12 +11,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class AuthServerService {
+public class ServerAuthService {
     //Лист для залогиненых юзеров
     private final Map<ChannelHandlerContext, User> loggedUsers;
     private UserRepo userRepo;
 
-    public AuthServerService() {
+    public ServerAuthService() {
         this.userRepo = new UserRepo();
         loggedUsers = new ConcurrentHashMap<>();
     }

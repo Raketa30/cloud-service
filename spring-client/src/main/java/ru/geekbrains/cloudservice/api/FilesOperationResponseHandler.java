@@ -5,42 +5,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.commands.ResponseMessage;
 import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
-import ru.geekbrains.cloudservice.dto.FileInfoTo;
 import ru.geekbrains.cloudservice.service.ClientFileService;
-import ru.geekbrains.cloudservice.service.FileListViewService;
+import ru.geekbrains.cloudservice.service.ClientFilesOperationService;
 
 @Service
 @Slf4j
 public class FilesOperationResponseHandler {
     private final ClientFileService clientFileService;
-    private final FileListViewService fileListViewService;
+    private final ClientFilesOperationService clientFilesOperationService;
 
     @Autowired
-    public FilesOperationResponseHandler(ClientFileService clientFileService, FileListViewService fileListViewService) {
+    public FilesOperationResponseHandler(ClientFileService clientFileService, ClientFilesOperationService clientFilesOperationService) {
         this.clientFileService = clientFileService;
-        this.fileListViewService = fileListViewService;
+        this.clientFilesOperationService = clientFilesOperationService;
     }
 
     public void processHandler(ResponseMessage responseMessage) {
         FileOperationResponseType fileOperationRequestType = (FileOperationResponseType) responseMessage.getResponse().getResponseType();
 
         switch (fileOperationRequestType) {
-            case FILE_READY_TO_SAVE:
-            case DIRECTORY_READY_TO_SAVE:
-                clientFileService.sendFileToServer(responseMessage);
-                break;
-
-            case FILE_ALREADY_EXIST:
-                FileInfoTo fileInfoTo = (FileInfoTo) responseMessage.getAbstractMessageObject();
-                log.debug("File already exist {}", fileInfoTo);
-                break;
-
             case FILE_LIST_SENT:
-                fileListViewService.addFileListFromServer(responseMessage);
+                clientFilesOperationService.addFileListFromServer(responseMessage);
                 break;
 
             case FILE_SENT:
                 clientFileService.saveFileFromServer(responseMessage);
+                break;
+
+            case DIRECTORY_SENT:
+                clientFileService.saveDirectory(responseMessage);
                 break;
 
             case EMPTY_LIST:
@@ -48,6 +41,7 @@ public class FilesOperationResponseHandler {
                 break;
 
             case FILE_NOT_EXIST:
+                clientFileService.updateLocalList(responseMessage);
                 break;
 
             case DIRECTORY_NOT_EXIST:

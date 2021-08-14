@@ -10,19 +10,19 @@ import ru.geekbrains.cloudservice.commands.auth.AuthResponse;
 import ru.geekbrains.cloudservice.commands.auth.AuthResponseType;
 import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.model.User;
-import ru.geekbrains.cloudservice.service.AuthServerService;
+import ru.geekbrains.cloudservice.service.ServerAuthService;
 
 import java.util.Optional;
 
 @Slf4j
 public class ServerAuthHandler {
-    private final AuthServerService authServerService;
+    private final ServerAuthService serverAuthService;
     private final ServerMessageHandler clientHandler;
     @Getter
     private User activeUser;
 
-    public ServerAuthHandler(AuthServerService authServerService, ServerMessageHandler clientHandler) {
-        this.authServerService = authServerService;
+    public ServerAuthHandler(ServerAuthService serverAuthService, ServerMessageHandler clientHandler) {
+        this.serverAuthService = serverAuthService;
         this.clientHandler = clientHandler;
     }
 
@@ -32,7 +32,7 @@ public class ServerAuthHandler {
         switch (requestType) {
             case LOGIN:
                 User tempUser = (User) requestMessage.getAbstractMessageObject();
-                Optional<User> optionalUser = authServerService.loginRequest(tempUser);
+                Optional<User> optionalUser = serverAuthService.loginRequest(tempUser);
                 if (optionalUser.isPresent()) {
                     User logUser = optionalUser.get();
                     clientHandler.sendResponse(new ResponseMessage(new AuthResponse(AuthResponseType.LOGIN_OK), new UserTo(logUser.getUsername())));
@@ -46,10 +46,10 @@ public class ServerAuthHandler {
 
             case REGISTRATION:
                 User user = (User) requestMessage.getAbstractMessageObject();
-                Optional<User> regUser = authServerService.findUserByUsername(user.getUsername());
+                Optional<User> regUser = serverAuthService.findUserByUsername(user.getUsername());
 
                 if (regUser.isEmpty()) {
-                    authServerService.registerNewUser(user);
+                    serverAuthService.registerNewUser(user);
                     clientHandler.sendResponse(new ResponseMessage(new AuthResponse(AuthResponseType.REGISTRATION_OK), new UserTo(user.getUsername())));
                     log.info(user.toString());
                     break;
@@ -60,7 +60,7 @@ public class ServerAuthHandler {
                 break;
 
             case LOGOUT:
-                authServerService.removeLoggedUser(ctx);
+                serverAuthService.removeLoggedUser(ctx);
                 ctx.close();
                 break;
         }

@@ -13,6 +13,7 @@ import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
 import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
+import ru.geekbrains.cloudservice.model.UploadedStatus;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -22,36 +23,45 @@ import java.time.LocalDateTime;
 @Slf4j
 @Service
 public class ClientFileService {
-    private final ClientMessageHandler clientMessageHandler;
+    private final ClientMessageHandler messageHandler;
+    private final ClientFilesOperationService operationService;
     private final DataModel dataModel;
 
     @Autowired
-    public ClientFileService(ClientMessageHandler clientMessageHandler, DataModel dataModel) {
-        this.clientMessageHandler = clientMessageHandler;
+    public ClientFileService(ClientMessageHandler messageHandler, ClientFilesOperationService operationService, DataModel dataModel) {
+        this.messageHandler = messageHandler;
+        this.operationService = operationService;
         this.dataModel = dataModel;
     }
 
-    public void sendRequestForFileSaving(FileInfo localFileInfo) {
-        FileInfoTo fileInfo = getFileInfoTo(localFileInfo);
-        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE_REQUEST), fileInfo));
-    }
-
-    public void sendFileToServer(ResponseMessage responseMessage) {
-        FileInfoTo responseBody = (FileInfoTo) responseMessage.getAbstractMessageObject();
-        Path filePath = getFilePath(responseBody);
-        try {
-            if (!Files.isHidden(filePath) && Files.isReadable(filePath)) {
-                clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), responseBody));
-                sendFileToServer(responseBody, filePath);
+    public void sendFileToServer(FileInfo fileInfo) {
+        Path filePath = fileInfo.getPath();
+        if (Files.exists(filePath)) {
+            if (Files.isDirectory(filePath)) {
+                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), fileInfo));
+                try {
+                    Files.walk(filePath).forEach(p -> {
+                        FileInfo file = new FileInfo(p);
+                        if (Files.isDirectory(p)) {
+                            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), file));
+                        } else {
+                            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), file));
+                            sendFileToServer(p, file);
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), fileInfo));
+                sendFileToServer(filePath, fileInfo);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-    private void sendFileToServer(FileInfoTo responseBody, Path filePath) {
+    private void sendFileToServer(Path filePath, FileInfo fileInfo) {
         try {
-            clientMessageHandler.sendFileToServer(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, responseBody.getSize()));
+            messageHandler.sendFileToServer(new DefaultFileRegion(FileChannel.open(filePath, StandardOpenOption.READ), 0L, fileInfo.getFileSize()));
         } catch (IOException e) {
             log.warn("file sending ex {}", e.getMessage());
         }
@@ -59,12 +69,16 @@ public class ClientFileService {
 
     public void sendRequestForFileDownloading(FileInfo fileInfo) {
         FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
-        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_FILE), fileInfoTo));
+        if (fileInfo.getFileType().equals("folder")) {
+            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_DIRECTORY), fileInfoTo));
+        } else {
+            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_FILE), fileInfoTo));
+        }
     }
 
     public void sendRequestForDeleting(FileInfo fileInfo) {
         FileInfoTo fileInfoTo = getFileInfoTo(fileInfo);
-        clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DELETE_FILE), fileInfoTo));
+        messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DELETE_FILE), fileInfoTo));
     }
 
     private Path getFilePath(FileInfoTo to) {
@@ -74,18 +88,20 @@ public class ClientFileService {
 
     private FileInfoTo getFileInfoTo(FileInfo localFileInfo) {
         String fileName = localFileInfo.getFilename();
-        String relativePath = localFileInfo.getRelativePath().toString();
+        String filePath = localFileInfo.getRelativePath() == null ?
+                Paths.get(dataModel.getRootPath()).relativize(localFileInfo.getPath()).toString() :
+                localFileInfo.getRelativePath().toString();
         String fileType = localFileInfo.getFileType();
         Long fileSize = localFileInfo.getFileSize();
         LocalDateTime dateModified = localFileInfo.getLastModified();
 
-        return new FileInfoTo(fileName, relativePath, fileType, fileSize, dateModified);
+        return new FileInfoTo(fileName, filePath, fileType, fileSize, dateModified);
     }
 
     public void saveFileFromServer(ResponseMessage responseMessage) {
         FileInfoTo fileInfoTo = (FileInfoTo) responseMessage.getAbstractMessageObject();
         Path filePath = getFilePath(fileInfoTo);
-        clientMessageHandler.createFileHandler(filePath, fileInfoTo);
+        messageHandler.createFileHandler(filePath, fileInfoTo);
     }
 
     public void copyFileToUserFolder(Path from, Path to) {
@@ -97,34 +113,68 @@ public class ClientFileService {
         }
     }
 
-    public void createNewFolder(String text, Path path) {
-        try {
-            Files.createDirectory(path.resolve(text));
-            updateFileList(path);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void createNewFolder(String folderName) {
+        String relative = operationService.getRelativePath();
+        if (operationService.isLocalFolder()) {
+            if (operationService.createNewFolder(folderName)) {
+                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(relative)));
+            }
+        } else {
+            FileInfoTo dir = new FileInfoTo();
+            dir.setFileName(folderName);
+            dir.setFileType("folder");
+            dir.setFilePath(operationService.getRelativePath());
+            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), dir));
+            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(relative)));
         }
     }
 
-    public void deleteLocalFile(Path currentPath) {
+    public void deleteLocalFile(FileInfo fileInfo) {
+        Path root = Paths.get(dataModel.getRootPath());
+        Path currentPath = root.resolve(fileInfo.getRelativePath());
         try {
             Files.deleteIfExists(currentPath);
-            updateFileList(currentPath);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void updateFileList(Path currentPath) {
-        Path root = Paths.get(dataModel.getRootPath());
-        if (currentPath.equals(root)) {
-            clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage("")));
-        } else {
-            Path message = root.relativize(currentPath);
-            clientMessageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(message.toString())));
+    public void updateFileList(FileInfo fileInfo) {
+        if (fileInfo.getFileType().equals("folder")) {
+            if (operationService.getRelativePath().equals("/")) {
+                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage("")));
+            } else {
+                if (fileInfo.getUploadedStatus() == UploadedStatus.NOT_UPLOADED) {
+                    operationService.getLocalFileList(fileInfo);
+                } else {
+                    String relative = Paths.get(dataModel.getRootPath()).relativize(fileInfo.getPath()).toString();
+                    messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(relative)));
+                }
+            }
         }
     }
 
+    public void sendFolderUpRequest(String relative) {
+        operationService.getLocalPath()
+        messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FOLDER_UP), new FilesListMessage(relative)));
+    }
+
+    public void saveDirectory(ResponseMessage responseMessage) {
+        FileInfoTo fileInfoTo = (FileInfoTo) responseMessage.getAbstractMessageObject();
+        Path filePath = getFilePath(fileInfoTo);
+        try {
+            if (Files.notExists(filePath)) {
+                Files.createDirectory(filePath);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateLocalList(ResponseMessage responseMessage) {
+        FilesListMessage listMessage = (FilesListMessage) responseMessage.getAbstractMessageObject();
+        operationService.updateLocalList(listMessage.getRelativePath());
+    }
 }
 
 

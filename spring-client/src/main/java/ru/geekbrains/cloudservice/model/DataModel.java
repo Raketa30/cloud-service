@@ -8,8 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.dto.UserTo;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,8 +69,7 @@ public class DataModel {
         return relativePath.get();
     }
 
-    public void setRelativePath(Path path) {
-        String relative = Paths.get(getRootPath()).relativize(path).toString();
+    public void setRelativePath(String relative) {
         this.relativePath.set(relative);
     }
 }

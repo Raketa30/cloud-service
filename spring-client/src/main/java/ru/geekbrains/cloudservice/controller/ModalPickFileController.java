@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.service.ClientFileService;
 
 import java.io.File;
-import java.nio.file.Paths;
 
 @Slf4j
 @Component
@@ -23,7 +22,6 @@ import java.nio.file.Paths;
 public class ModalPickFileController {
 
     private final ClientFileService clientFileService;
-    private final MainController mainController;
     private final FxWeaver fxWeaver;
 
     @FXML
@@ -36,9 +34,8 @@ public class ModalPickFileController {
     private TextField pathTextField;
 
     @Autowired
-    public ModalPickFileController(ClientFileService clientFileService, MainController mainController, FxWeaver fxWeaver) {
+    public ModalPickFileController(ClientFileService clientFileService, FxWeaver fxWeaver) {
         this.clientFileService = clientFileService;
-        this.mainController = mainController;
         this.fxWeaver = fxWeaver;
     }
 
@@ -76,8 +73,6 @@ public class ModalPickFileController {
     }
 
     public void confirmUserFolderPath(ActionEvent actionEvent) {
-        clientFileService.copyFileToUserFolder(Paths.get(pathTextField.getText()), mainController.getPath());
         this.stage.hide();
-        mainController.updateList(mainController.getPath());
     }
 }

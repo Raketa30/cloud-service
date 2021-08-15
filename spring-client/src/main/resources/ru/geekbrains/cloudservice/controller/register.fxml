@@ -30,10 +30,11 @@
                 <Font size="18.0" />
             </font>
         </JFXButton>
-      <JFXButton layoutX="14.0" layoutY="341.0" onAction="#backToPreviosStage" style="-fx-background-color: #004c40;" text="Back" textFill="#fffefe">
+      <JFXButton fx:id="backButton" layoutX="14.0" layoutY="341.0" onAction="#backToPreviousStage" style="-fx-background-color: #004c40;" text="Back" textFill="#fffefe">
          <font>
             <Font size="18.0" />
          </font>
       </JFXButton>
+      <Label fx:id="regWrong" layoutX="420.0" layoutY="297.0" text="Registration wrong" textFill="#ff3939" visible="false" />
     </children>
 </AnchorPane>

@@ -1,28 +1,27 @@
 package ru.geekbrains.cloudservice.repo;
 
-import ru.geekbrains.cloudservice.dao.DBConnection;
+import ru.geekbrains.cloudservice.dao.UserDBConnection;
 import ru.geekbrains.cloudservice.model.User;
 
 import java.util.Optional;
 
-
 public class UserRepo {
-    private DBConnection dbConnection;
+    private final UserDBConnection userDbConnection;
 
-    public UserRepo(DBConnection dbConnection) {
-        this.dbConnection = dbConnection;
+    public UserRepo() {
+        this.userDbConnection = new UserDBConnection();
     }
 
     public Optional<User> findUserByLoginAndPassword(String username, String password) {
         User user = new User(username, password);
-        return dbConnection.findUserByUsernameAndPassword(user);
+        return userDbConnection.findUserByUsernameAndPassword(user);
     }
 
     public Optional<User> findUserByUsername(String username) {
-        return dbConnection.findUserByUsername(username);
+        return userDbConnection.findUserByUsername(username);
     }
 
     public void registerNewUser(User user) {
-        dbConnection.registerNewUser(user);
+        userDbConnection.registerNewUser(user);
     }
 }

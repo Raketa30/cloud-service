@@ -12,25 +12,24 @@ import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.config.MainConfig;
+import ru.geekbrains.cloudservice.service.ServerAuthService;
+import ru.geekbrains.cloudservice.util.Factory;
 import ru.geekbrains.cloudservice.util.MyLogger;
 
 @Slf4j
 public class NettyServer {
-    private ServerAuthHandler serverAuthHandler;
-    private int port;
-    private final MainConfig mainConfig;
+    private final int port;
+    private final ServerAuthService authService;
 
     public NettyServer(int port) {
+        this.authService = Factory.getAuthService();
         this.port = port;
-        mainConfig = new MainConfig();
     }
 
     public void run() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        serverAuthHandler = new ServerAuthHandler();
-        serverAuthHandler.setAuthServerService(mainConfig.getAuthServerService());
+
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(bossGroup, workerGroup)
@@ -38,11 +37,12 @@ public class NettyServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            socketChannel.pipeline().addLast(
-                                    new ObjectEncoder(),
-                                    new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    serverAuthHandler
-                            );
+                            socketChannel.pipeline()
+                                    //out
+                                    .addLast("oe", new ObjectEncoder())
+                                    //In
+                                    .addLast("od", new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(null)))
+                                    .addLast("2", new ServerMessageHandler(authService));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)
@@ -54,7 +54,7 @@ public class NettyServer {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         } catch (InterruptedException interruptedException) {
-            interruptedException.printStackTrace();
+            log.error("server shutdown: {}", interruptedException.getMessage());
         }
     }
 

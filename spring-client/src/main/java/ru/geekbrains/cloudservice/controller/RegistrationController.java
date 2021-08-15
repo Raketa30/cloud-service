@@ -1,9 +1,12 @@
 package ru.geekbrains.cloudservice.controller;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
@@ -14,7 +17,9 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.geekbrains.cloudservice.service.AuthService;
+import ru.geekbrains.cloudservice.dto.UserTo;
+import ru.geekbrains.cloudservice.model.DataModel;
+import ru.geekbrains.cloudservice.service.ClientAuthService;
 
 import java.io.File;
 import java.net.URL;
@@ -24,18 +29,25 @@ import java.util.ResourceBundle;
 @Component
 @FxmlView("register.fxml")
 public class RegistrationController {
-    private final AuthService authService;
+    private final ClientAuthService clientAuthService;
+    private final DataModel dataModel;
+    private final FxWeaver fxWeaver;
+    @FXML
+    public Label regWrong;
 
-    private FxWeaver fxWeaver;
+    @FXML
+    private JFXButton backButton;
 
     @FXML
     private AnchorPane mainDialog;
 
+    @FXML
     private Stage stage;
 
     @Autowired
-    public RegistrationController(AuthService authService, FxWeaver fxWeaver) {
-        this.authService = authService;
+    public RegistrationController(ClientAuthService clientAuthService, DataModel dataModel, FxWeaver fxWeaver) {
+        this.clientAuthService = clientAuthService;
+        this.dataModel = dataModel;
         this.fxWeaver = fxWeaver;
     }
 
@@ -84,23 +96,18 @@ public class RegistrationController {
         String passwordRepeat = passwordRepeatField.getText();
 
         if (validateCredentials(username, password, passwordRepeat)) {
-            authService.registerUser(username, password);
-            authService.setUserFolderPath(folderPath.getText());
-
-            while (authService.isRegistrationConfirm() || authService.isRegistrationDecline()) {
-                if (authService.isRegistrationConfirm()) {
-                    log.info("userpath setted{}", folderPath.getText());
-                    fxWeaver.loadController(AuthController.class).show();
-                    break;
+            clientAuthService.registerUser(username, password);
+            SimpleObjectProperty<UserTo> userProperty = dataModel.registeredUserProperty();
+            userProperty.addListener((observable, oldValue, newValue) -> {
+                if (!newValue.getUsername().equals("*empty")) {
+                    clientAuthService.createLocalUserDirectory(folderPath.getText(), username);
+                    dataModel.setRegisteredUser(new UserTo("*empty"));
+                    registerOk();
+                } else {
+                    regWrong.setVisible(true);
                 }
-
-                if (authService.isRegistrationDecline()) {
-                    break;
-                }
-            }
-
+            });
         }
-
     }
 
     public void chooseFolder(ActionEvent actionEvent) {
@@ -121,11 +128,19 @@ public class RegistrationController {
                 && password.equals(passwordRepeat);
     }
 
+    private void registerOk() {
+        Platform.runLater(() -> {
+            confirmRegButton.getScene().getWindow().hide();
+            fxWeaver.loadController(AuthController.class).show();
+        });
+    }
+
     public void show() {
         stage.show();
     }
 
-    public void backToPreviosStage(ActionEvent actionEvent) {
+    public void backToPreviousStage(ActionEvent actionEvent) {
+        backButton.getScene().getWindow().hide();
         fxWeaver.loadController(AuthController.class).show();
     }
 }

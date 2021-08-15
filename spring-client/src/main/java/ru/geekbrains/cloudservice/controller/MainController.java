@@ -1,13 +1,17 @@
 package ru.geekbrains.cloudservice.controller;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXListView;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -17,18 +21,14 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
-import ru.geekbrains.cloudservice.service.AuthService;
-import ru.geekbrains.cloudservice.service.FileService;
+import ru.geekbrains.cloudservice.model.UploadedStatus;
+import ru.geekbrains.cloudservice.service.ClientFileService;
 
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -36,13 +36,11 @@ import java.util.stream.Collectors;
 public class MainController {
     private final FxWeaver fxWeaver;
 
-    private Path currentPath;
-
     @FXML
     public TextField pathField;
     //Сервисы
-    private AuthService authService;
-    private FileService fileService;
+    private final ClientFileService fileService;
+    private final DataModel dataModel;
 
     @FXML
     private BorderPane mainDialog;
@@ -57,41 +55,30 @@ public class MainController {
     private TableColumn<FileInfo, Long> fileSizeColumn;
 
     @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
-
-    @FXML
-    private Label freeSpace;
-
-    @FXML
-    private JFXButton folderUpButton;
-
-    @FXML
-    public TableColumn<FileInfo, String> downloadColumn;
-
-    @FXML
     private TableColumn<FileInfo, String> fileNameColumn;
 
     @FXML
     private TableColumn<FileInfo, String> fileTypeColumn;
 
     @FXML
-    private TableColumn<FileInfo, String> uploadColumn;
+    public TableColumn<FileInfo, UploadedStatus> deleteColumn;
+
     @FXML
-    private TableColumn<FileInfo, String> onAirColumn;
+    private TableColumn<FileInfo, UploadedStatus> onAirColumn;
+
+    @FXML
+    private TableColumn<FileInfo, UploadedStatus> upDownColumn;
 
     @FXML
     private TableColumn<FileInfo, String> fileLastModifiedColumn;
-    @FXML
-    private JFXListView<String> rootFoldersList;
+
+    private String currentRelativePath;
 
     @Autowired
-    public MainController(FxWeaver fxWeaver, AuthService authService, FileService fileService) {
+    public MainController(FxWeaver fxWeaver, ClientFileService fileService, DataModel dataModel) {
         this.fxWeaver = fxWeaver;
-        this.authService = authService;
         this.fileService = fileService;
+        this.dataModel = dataModel;
     }
 
     @FXML
@@ -99,9 +86,17 @@ public class MainController {
 
     @FXML
     void initialize() {
-        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType().getName()));
+        SimpleStringProperty relative = dataModel.relativePathProperty();
+        currentRelativePath = relative.getValue();
+        pathField.setText(relative.getValue());
+        relative.addListener((observable, oldValue, newValue) -> {
+            currentRelativePath = newValue;
+            pathField.setText("/" + newValue);
+        });
+
+        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType()));
         fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
-        fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getFileSize()));
+        fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getSize()));
         fileSizeColumn.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(Long item, boolean empty) {
@@ -118,12 +113,52 @@ public class MainController {
                 }
             }
         });
-        //показываем статус загруженного файл
-        //https://stackoverflow.com/questions/42662807/javafx-tablecolumn-cell-change - спасибо ребятам
+
         onAirColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
+        upDownColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
+        deleteColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
+        fileLastModifiedColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()
+                .getLastModified()
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
+
+        ObservableList<FileInfo> fileListObserver = dataModel.getFileInfos();
+        filesList.getItems().addAll(fileListObserver);
+        fileListObserver.addListener((ListChangeListener<FileInfo>) c -> {
+            filesList.getItems().clear();
+            filesList.getItems().addAll(c.getList());
+            updateRows();
+            filesList.sort();
+        });
+
+        filesList.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getClickCount() == 2) {
+                FileInfo fileInfo = getSelectedFileInfo();
+                if (fileInfo.getType().equals("folder")) {
+                    updateFilesList(fileInfo);
+                }
+            }
+        });
+
+        updateFilesList(new FileInfo(Paths.get(dataModel.getRootPath())));
+    }
+
+    private void updateFilesList(FileInfo fileInfo) {
+        fileService.updateFileList(fileInfo);
+        setAirStatus();
+        setDeleteButtons();
+        setDownloadUploadButton();
+    }
+
+    private void updateRows() {
+        setAirStatus();
+        setDeleteButtons();
+        setDownloadUploadButton();
+    }
+
+    private void setAirStatus() {
         onAirColumn.setCellFactory(column -> new TableCell<>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(UploadedStatus item, boolean empty) {
                 super.updateItem(item, empty);
                 if (isSafe(item, empty)) {
                     CellData data = CellData.cellData(item);
@@ -133,139 +168,112 @@ public class MainController {
                 }
             }
 
-            private boolean isSafe(String item, boolean empty) {
+            private boolean isSafe(UploadedStatus item, boolean empty) {
                 return !empty && Objects.nonNull(item);
             }
         });
-        //кнопки отправки файла/папки в строке
-        uploadColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
-        uploadColumn.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (isSafe(item, empty)) {
-                    if(item.equals("not") || item.equals("medium")) {
-                        JFXButton button = new JFXButton();
-                        button.setText("▲");
-                        button.setStyle("-fx-background-color: #0C0878; " +
-                                "-fx-border-color: aliceblue;  " +
-                                "-fx-text-fill: aliceblue");
-                        setGraphic(button);
-                    }
-                }
-            }
+    }
 
-            private boolean isSafe(String item, boolean empty) {
-                return !empty && Objects.nonNull(item);
-            }
-        });
-        //кнопки загрузки файла/папки в строке
-        downloadColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
-        downloadColumn.setCellFactory(column -> new TableCell<>() {
+    private void setDownloadUploadButton() {
+        upDownColumn.setCellFactory(column -> new TableCell<>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(UploadedStatus item, boolean empty) {
                 super.updateItem(item, empty);
                 if (isSafe(item, empty)) {
-                    if(item.equals("yes")) {
+                    if (item == UploadedStatus.AIR) {
                         JFXButton button = new JFXButton();
                         button.setText("▼");
                         button.setStyle("-fx-background-color: green; " +
                                 "-fx-border-color: aliceblue; " +
-                                "-fx-text-fill: aliceblue");
+                                "-fx-text-fill: aliceblue;" +
+                                "-fx-border-radius: 50%;");
                         setGraphic(button);
+
+                        button.setOnMouseClicked(event -> {
+                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            fileService.sendRequestForFileDownloading(fileInfo);
+                        });
+                    }
+
+                    if (item == UploadedStatus.NOT_UPLOADED) {
+                        JFXButton button = new JFXButton();
+                        button.setText("▲");
+                        button.setStyle("-fx-background-color: #0C0878; " +
+                                "-fx-border-color: aliceblue;  " +
+                                "-fx-text-fill: aliceblue; " +
+                                "-fx-border-radius: 50%;");
+                        setGraphic(button);
+
+                        button.setOnMouseClicked(event -> {
+                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            fileService.sendFileToServer(fileInfo);
+                        });
                     }
                 }
             }
 
-            private boolean isSafe(String item, boolean empty) {
+            private boolean isSafe(UploadedStatus item, boolean empty) {
                 return !empty && Objects.nonNull(item);
             }
         });
-
-        try {
-            rootFoldersList.getItems().addAll(Files.list(authService.getUserFolderPath())
-                    .filter(path -> new FileInfo(path).getFileType() == FileInfo.FileType.DIRECTORY)
-                    .map(s -> new FileInfo(s).getFilename())
-                    .collect(Collectors.toList())
-            );
-
-        } catch (IOException e) {
-            log.warn("Нен удалось отобразить список папок в рутовом каталоге");
-        }
-        //gtht[jlbv d gfgrb bp henjdjuj rfnfkjuf
-        rootFoldersList.setOnMouseClicked(mouseEvent -> {
-            currentPath = authService.getUserFolderPath().resolve(getSelectedFolder());
-            updateList(currentPath);
-        });
-
-        fileLastModifiedColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()
-                .getLastModified()
-                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
-
-        filesList.setOnMouseClicked(mouseEvent -> {
-            if (mouseEvent.getClickCount() == 2) {
-                Path filePath = getCurrentPath();
-                if (Files.isDirectory(filePath)) {
-                    updateList(filePath);
-                }
-            }
-        });
-        currentPath = authService.getUserFolderPath();
-        updateList(currentPath);
     }
 
+    private void setDeleteButtons() {
+        deleteColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(UploadedStatus item, boolean empty) {
+                super.updateItem(item, empty);
+                if (isSafe(item, empty)) {
+                    if (item == UploadedStatus.AIR || item == UploadedStatus.UPLOADED) {
+                        JFXButton button = new JFXButton();
+                        button.setText("x");
+                        setGraphic(button);
 
-    public void updateList(Path path) {
-        Path relativizedPath = authService.getUserFolderPath().relativize(path);
-        try {
-            pathField.setText("/" + relativizedPath.normalize().toString());
-            filesList.getItems().clear();
-            filesList.getItems().addAll(
-                    Files.list(path)
-                            .map(FileInfo::new)
-                            .collect(Collectors.toList())
-            );
-            filesList.sort();
-        } catch (IOException e) {
-            new Alert(Alert.AlertType.WARNING, "Не удалось отобразить список файлов", ButtonType.OK);
-        }
+                        button.setOnMouseClicked(event -> {
+                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            fileService.sendRequestForDeleting(fileInfo);
+                        });
+                    }
+                }
+            }
 
+            private boolean isSafe(UploadedStatus item, boolean empty) {
+                return !empty && Objects.nonNull(item);
+            }
+        });
     }
 
     public void btnPathUpAction(ActionEvent actionEvent) {
-        if (currentPath.equals(authService.getUserFolderPath())) {
+        if (currentRelativePath.equals("")) {
             return;
         }
-        Path upPath = currentPath.getParent();
-
-        if (upPath != null) {
-            currentPath = upPath;
-            updateList(upPath);
-        }
+        fileService.sendFolderUpRequest(currentRelativePath);
     }
 
-    public String getSelectedFilename() {
-        return filesList.getSelectionModel().getSelectedItem().getFilename();
-    }
-
-    public String getSelectedFolder() {
-        return rootFoldersList.getSelectionModel().getSelectedItem();
-    }
-
-    public Path getCurrentPath() {
-        if (Files.isDirectory(currentPath.resolve(getSelectedFilename()))) {
-            currentPath = currentPath.resolve(getSelectedFilename());
-        }
-        return currentPath;
+    public FileInfo getSelectedFileInfo() {
+        return filesList.getSelectionModel().getSelectedItem();
     }
 
     public void show() {
         this.stage = new Stage();
         stage.setScene(new Scene(mainDialog));
-        stage.setTitle(authService.getUserTo().getUsername());
+        stage.setTitle("cloud");
         stage.setResizable(false);
         connectionStatusLamp.setFill(Color.GREEN);
         stage.show();
+    }
+
+    //удалить локально
+    public void deleteFile(ActionEvent actionEvent) {
+        fileService.deleteFile(getSelectedFileInfo(), currentRelativePath);
+    }
+
+    public void addNewFolder(ActionEvent actionEvent) {
+        fxWeaver.loadController(FileNameController.class).show();
+    }
+
+    public void addNewFile(ActionEvent actionEvent) {
+        fxWeaver.loadController(ModalPickFileController.class).show();
     }
 }
 

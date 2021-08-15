@@ -1,9 +1,7 @@
 package ru.geekbrains.cloudservice.commands;
 
-import ru.geekbrains.cloudservice.commands.auth.AuthRequestType;
+import java.io.Serializable;
 
-public interface Request<T> {
-   AuthRequestType getType();
-
-   T getRequestBody();
+public interface Request extends Serializable {
+   CommandType getRequestCommandType();
 }

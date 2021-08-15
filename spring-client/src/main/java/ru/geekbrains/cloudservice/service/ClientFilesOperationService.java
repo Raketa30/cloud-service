@@ -11,12 +11,16 @@ import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.model.UploadedStatus;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -141,5 +145,31 @@ public class ClientFilesOperationService {
     private void setLocalRelativePath(Path path) {
         Path relative = Paths.get(dataModel.getRootPath()).relativize(path);
         dataModel.setRelativePath(relative.toString());
+    }
+
+    public void createUserFolder(Path path, String username) {
+        File file = new File(username.concat(".txt"));
+        try(FileWriter fileWriter = new FileWriter(file, false)) {
+            Files.createDirectories(path);
+            fileWriter.write(path.toString());
+        } catch (IOException e) {
+            log.warn("Problems with write setting file: {} ", e.getMessage());
+        }
+    }
+
+    public String getUserFolder(String username) {
+        File userSettings = new File(username.concat(".txt"));
+        String result = "";
+        if(userSettings.exists()) {
+            try (Scanner scanner = new Scanner(userSettings)) {
+                while (scanner.hasNext()) {
+                    result = scanner.nextLine();
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return result;
     }
 }

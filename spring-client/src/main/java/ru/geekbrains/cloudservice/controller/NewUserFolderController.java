@@ -79,7 +79,7 @@ public class NewUserFolderController {
     }
 
     public void confirmUserFolderPath(ActionEvent actionEvent) {
-        clientAuthService.createLocalUserDirectory(pathTextField.getText(), dataModel.getUser().getUsername());
+        clientAuthService.createAndSetUserDirectory(pathTextField.getText());
         stage.getScene().getWindow().hide();
         fxWeaver.loadController(MainController.class).show();
 

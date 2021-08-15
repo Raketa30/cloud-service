@@ -22,7 +22,7 @@
                 <TextField fx:id="loginUserName" layoutX="138.0" layoutY="38.0" prefHeight="41.0" prefWidth="263.0" promptText="Login" />
                 <JFXButton fx:id="regButton" layoutX="140.0" layoutY="189.0" onAction="#signUp" prefHeight="35.0" prefWidth="89.0" style="-fx-background-color: #546e7a #546e7a;" text="Sign Up" textFill="WHITE" />
                 <JFXButton fx:id="loginButton" layoutX="314.0" layoutY="189.0" onAction="#signIn" prefHeight="35.0" prefWidth="89.0" style="-fx-background-color: #546e7a;" text="Sign In" textFill="WHITE" />
-                <PasswordField fx:id="PasswordField" layoutX="140.0" layoutY="105.0" prefHeight="41.0" prefWidth="263.0" promptText="Password" />
+                <PasswordField fx:id="passwordField" layoutX="140.0" layoutY="105.0" prefHeight="41.0" prefWidth="263.0" promptText="Password" />
             <Label fx:id="wrongLogin" layoutX="232.0" layoutY="152.0" text="Wrong login" textFill="#e90e0e" visible="false" />
             </children>
         </AnchorPane>

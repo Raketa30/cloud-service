@@ -14,23 +14,21 @@ import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.User;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.Scanner;
 
 @Slf4j
 @Service
 public class ClientAuthService {
     private final ClientMessageHandler clientMessageHandler;
+    private final ClientFilesOperationService operationService;
     private final DataModel dataModel;
 
     @Autowired
-    public ClientAuthService(ClientMessageHandler clientMessageHandler, DataModel dataModel) {
+    public ClientAuthService(ClientMessageHandler clientMessageHandler, ClientFilesOperationService operationService, DataModel dataModel) {
         this.clientMessageHandler = clientMessageHandler;
+        this.operationService = operationService;
         this.dataModel = dataModel;
     }
 
@@ -52,7 +50,7 @@ public class ClientAuthService {
             dataModel.setRootPath(userFolder);
             log.info("logged");
         } else {
-            dataModel.setRootPath("empty");
+            dataModel.setRootPath("*empty");
         }
         dataModel.setUser(user);
     }
@@ -72,45 +70,24 @@ public class ClientAuthService {
         log.info("login wrong response");
     }
 
-    //ищем папку пользователя в файле настроек
     public Optional<String> findUserFolderPath(UserTo user) {
-        if (user == null) {
+        String username = user.getUsername();
+        String folder = operationService.getUserFolder(username);
+        if (folder.equals("")) {
             return Optional.empty();
         }
-        try (Scanner scanner = new Scanner(new File("spring-client/settings.txt"))) {
-            while (scanner.hasNext()) {
-                String line = scanner.nextLine();
-                String[] credentials = line.split(" : ");
-
-                if (credentials[0].equals(user.getUsername())) {
-                    return Optional.of(credentials[1]);
-                }
-            }
-        } catch (IOException e) {
-            log.warn("File setting not found");
-        }
-        return Optional.empty();
+        return Optional.of(folder);
     }
 
-    //создаем папку пользователя при успешной регистрации
     public void createLocalUserDirectory(String pickedDirectory, String username) {
-        String path = pickedDirectory + "/GeekbrainsCloud-" + username;
-        if (Files.exists(Paths.get(path))) {
-            return;
-        }
-
-        try {
-            Files.createDirectory(Paths.get(path));
-
-            File file = new File("spring-client/settings.txt");
-            try (FileWriter fileWriter = new FileWriter(file, true)) {
-                fileWriter.write(username + " : " + path + "\n");
-            }
-
-        } catch (IOException e) {
-            log.warn("Problems with write setting file: {} ", e.getMessage());
-        }
-        dataModel.setRootPath(path);
+        Path path = Paths.get(pickedDirectory).resolve("GeekbrainsCloud-" + username);
+        operationService.createUserFolder(path, username);
     }
 
+    public void createAndSetUserDirectory(String pickedDirectory) {
+        String loggedUser = dataModel.getUser().getUsername();
+        Path path = Paths.get(pickedDirectory).resolve("GeekbrainsCloud-" + loggedUser);
+        operationService.createUserFolder(path, loggedUser);
+        dataModel.setRootPath(operationService.getUserFolder(loggedUser));
+    }
 }

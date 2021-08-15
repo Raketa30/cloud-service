@@ -23,8 +23,8 @@ public class DataModel {
 
     public DataModel() {
         this.fileInfos = FXCollections.observableArrayList(new ArrayList<>());
-        this.user = new SimpleObjectProperty<>(new UserTo("empty"));
-        this.registeredUser = new SimpleObjectProperty<>(new UserTo("empty"));
+        this.user = new SimpleObjectProperty<>(new UserTo("*empty"));
+        this.registeredUser = new SimpleObjectProperty<>(new UserTo("*empty"));
         this.rootPath = new SimpleStringProperty("*empty");
         this.relativePath = new SimpleStringProperty("/");
 

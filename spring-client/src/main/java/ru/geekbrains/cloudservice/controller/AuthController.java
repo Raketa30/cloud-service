@@ -63,12 +63,12 @@ public class AuthController {
     private JFXButton loginButton;
 
     @FXML
-    private PasswordField PasswordField;
+    private PasswordField passwordField;
 
     @FXML
     void signIn(ActionEvent event) {
         String username = loginUserName.getText();
-        String password = PasswordField.getText();
+        String password = passwordField.getText();
         if (validateCredentials(username, password)) {
             clientAuthService.userLogin(username, password);
             SimpleObjectProperty<UserTo> userProperty = dataModel.userProperty();
@@ -82,28 +82,22 @@ public class AuthController {
         }
     }
 
-    //Читаем файл настроек и ищем папку юзера   юзер : папка
     @FXML
     void signUp(ActionEvent event) {
         loginButton.getScene().getWindow().hide();
         fxWeaver.loadController(RegistrationController.class).show();
     }
 
-    @FXML
-    void initialize() {
-
-    }
-
     public void loginOk() {
         String path = dataModel.getRootPath();
-        if (path.equals("empty")) {
-            fxWeaver.loadController(NewUserFolderController.class).show();
-        } else {
-            Platform.runLater(() -> {
-                loginButton.getScene().getWindow().hide();
+        Platform.runLater(() -> {
+            loginButton.getScene().getWindow().hide();
+            if (path.equals("*empty")) {
+                fxWeaver.loadController(NewUserFolderController.class).show();
+            } else {
                 fxWeaver.loadController(MainController.class).show();
-            });
-        }
+            }
+        });
     }
 
     public void show() {

@@ -167,7 +167,6 @@ public class ClientFilesOperationService {
                 log.warn("user folder not found");
             }
         }
-
         return result;
     }
 

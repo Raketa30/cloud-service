@@ -7,10 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.geekbrains.cloudservice.api.ClientMessageHandler;
 import ru.geekbrains.cloudservice.commands.impl.RequestMessage;
 import ru.geekbrains.cloudservice.commands.impl.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.impl.files.FileOperationRequest;
-import ru.geekbrains.cloudservice.commands.impl.files.FileOperationRequestType;
-import ru.geekbrains.cloudservice.commands.impl.files.FilesListMessage;
-import ru.geekbrains.cloudservice.commands.impl.files.FolderUpMessage;
+import ru.geekbrains.cloudservice.commands.impl.files.*;
 import ru.geekbrains.cloudservice.dto.FileTO;
 import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
@@ -37,16 +34,20 @@ public class ClientFileService {
     public void sendFileToServer(FileInfo fileInfo) {
         Path filePath = fileInfo.getPath();
         FileTO to = getFileInfoTo(fileInfo);
+        FileTransferMessage transferMessage = new FileTransferMessage(dataModel.getRelativePath());
+        transferMessage.setFileTO(to);
         if (Files.exists(filePath)) {
             if (Files.isDirectory(filePath)) {
-                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), to));
+                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), transferMessage));
                 try {
                     Files.walk(filePath).forEach(p -> {
                         FileInfo file = new FileInfo(p);
+                        FileTO fto = getFileInfoTo(fileInfo);
+                        transferMessage.setFileTO(fto);
                         if (Files.isDirectory(p)) {
-                            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), to));
+                            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), transferMessage));
                         } else {
-                            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), to));
+                            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), transferMessage));
                             sendFileToServer(p, file);
                         }
                     });
@@ -54,7 +55,7 @@ public class ClientFileService {
                     log.warn("send file to server error {}", e.getMessage());
                 }
             } else {
-                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), to));
+                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), transferMessage));
                 sendFileToServer(filePath, fileInfo);
             }
         }
@@ -70,16 +71,20 @@ public class ClientFileService {
 
     public void sendRequestForFileDownloading(FileInfo fileInfo) {
         FileTO fileTO = getFileInfoTo(fileInfo);
+        FileTransferMessage transferMessage = new FileTransferMessage(dataModel.getRelativePath());
+        transferMessage.setFileTO(fileTO);
         if (fileInfo.getType().equals("folder")) {
-            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_DIRECTORY), fileTO));
+            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_DIRECTORY), transferMessage));
         } else {
-            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_FILE), fileTO));
+            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DOWNLOAD_FILE), transferMessage));
         }
     }
 
     public void sendRequestForDeleting(FileInfo fileInfo) {
         FileTO fileTO = getFileInfoTo(fileInfo);
-        messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DELETE_FILE), fileTO));
+        FileTransferMessage transferMessage = new FileTransferMessage(dataModel.getRelativePath());
+        transferMessage.setFileTO(fileTO);
+        messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DELETE_FILE), transferMessage));
     }
 
     private Path getFilePath(FileTO to) {
@@ -125,7 +130,9 @@ public class ClientFileService {
             dir.setFilename(folderName);
             dir.setType("folder");
             dir.setRelativePath(operationService.getRelativePath());
-            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), dir));
+            FileTransferMessage transferMessage = new FileTransferMessage(dataModel.getRelativePath());
+            transferMessage.setFileTO(dir);
+            messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_DIRECTORY), transferMessage));
             messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(relative)));
         }
     }

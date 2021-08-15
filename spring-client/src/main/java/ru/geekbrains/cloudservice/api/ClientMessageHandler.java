@@ -8,10 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import ru.geekbrains.cloudservice.commands.Message;
 import ru.geekbrains.cloudservice.commands.Response;
-import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.auth.AuthResponse;
-import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
-import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.commands.impl.ResponseMessage;
+import ru.geekbrains.cloudservice.commands.impl.auth.AuthResponse;
+import ru.geekbrains.cloudservice.commands.impl.files.FileOperationResponse;
+import ru.geekbrains.cloudservice.dto.FileTO;
 
 import java.nio.file.Path;
 
@@ -101,8 +101,8 @@ public class ClientMessageHandler extends SimpleChannelInboundHandler<Message> {
         });
     }
 
-    public void createFileHandler(Path filePath, FileInfoTo fileInfoTo) {
-        ClientFileHandler clientFileHandler = new ClientFileHandler(filePath, fileInfoTo);
+    public void createFileHandler(Path filePath, FileTO fileTO) {
+        ClientFileHandler clientFileHandler = new ClientFileHandler(filePath, fileTO);
 
         ChannelPipeline pipeline = channelHandlerContext.pipeline()
                 .addBefore("od", "fh", clientFileHandler);

@@ -1,4 +1,4 @@
-package ru.geekbrains.cloudservice.commands.files;
+package ru.geekbrains.cloudservice.commands.impl.files;
 
 import ru.geekbrains.cloudservice.commands.CommandType;
 

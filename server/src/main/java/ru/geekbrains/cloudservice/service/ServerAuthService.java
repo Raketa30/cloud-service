@@ -1,24 +1,26 @@
 package ru.geekbrains.cloudservice.service;
 
-import io.netty.channel.ChannelHandlerContext;
+import lombok.extern.slf4j.Slf4j;
+import ru.geekbrains.cloudservice.commands.impl.RequestMessage;
 import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.repo.UserRepo;
+import ru.geekbrains.cloudservice.util.Factory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
+@Slf4j
 public class ServerAuthService {
-    //Лист для залогиненых юзеров
-    private final Map<ChannelHandlerContext, User> loggedUsers;
-    private UserRepo userRepo;
+    private final UserRepo userRepo;
+    private final List<User> loggedUser;
 
     public ServerAuthService() {
-        this.userRepo = new UserRepo();
-        loggedUsers = new ConcurrentHashMap<>();
+        this.userRepo = Factory.getUserRepo();
+        this.loggedUser = new CopyOnWriteArrayList<>();
     }
 
     public Optional<User> loginRequest(User user) {
@@ -28,9 +30,6 @@ public class ServerAuthService {
     public Optional<User> findUserByUsername(String username) {
         return userRepo.findUserByUsername(username);
     }
-
-
-//    регистрируем нового пользователя и устанавливает ему рутовую папку на сервере
 
     public void registerNewUser(User user) {
         user.setActive(true);
@@ -43,15 +42,34 @@ public class ServerAuthService {
         userRepo.registerNewUser(user);
     }
 
-    public void addLoggedUser(ChannelHandlerContext ctx, User user) {
-        loggedUsers.put(ctx, user);
+    public void removeLoggedUser() {
     }
 
-    public void removeLoggedUser(ChannelHandlerContext ctx) {
-        loggedUsers.remove(ctx);
+    public Optional<User> loginUser(RequestMessage requestMessage) {
+        User tempUser = (User) requestMessage.getAbstractMessageObject();
+        Optional<User> optionalUser = loginRequest(tempUser);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if(!loggedUser.contains(user)) {
+                loggedUser.add(user);
+                log.info("user {} successfully logged", user);
+                return Optional.of(user);
+            }
+            log.info("user {} already logged", user);
+        }
+        log.info("wrong login attempt");
+        return Optional.empty();
     }
 
-    public User getUserFormContext(ChannelHandlerContext ctx) {
-        return loggedUsers.get(ctx);
+    public Optional<User> registerUser(RequestMessage requestMessage) {
+        User user = (User) requestMessage.getAbstractMessageObject();
+        Optional<User> regUser = findUserByUsername(user.getUsername());
+        if (regUser.isEmpty()) {
+            registerNewUser(user);
+            log.info(user.toString());
+            return Optional.of(user);
+        }
+        log.info("wrong registration attempt, user exist");
+        return Optional.empty();
     }
 }

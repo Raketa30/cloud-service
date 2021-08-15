@@ -4,10 +4,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import lombok.extern.slf4j.Slf4j;
-import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.files.FileOperationResponse;
-import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
-import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.commands.impl.ResponseMessage;
+import ru.geekbrains.cloudservice.commands.impl.files.FileOperationResponse;
+import ru.geekbrains.cloudservice.commands.impl.files.FileOperationResponseType;
+import ru.geekbrains.cloudservice.dto.FileTO;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -20,12 +20,12 @@ import java.time.LocalDateTime;
 @Slf4j
 public class ServerFileHandler extends ChunkedWriteHandler {
     private final Path filePath;
-    private final FileInfoTo fileInfoTo;
+    private final FileTO fileTO;
 
-    public ServerFileHandler(Path filePath, FileInfoTo fileInfoTo) {
+    public ServerFileHandler(Path filePath, FileTO fileTO) {
         this.filePath = filePath;
-        this.fileInfoTo = fileInfoTo;
-        fileInfoTo.setLocalDateTime(LocalDateTime.now());
+        this.fileTO = fileTO;
+        fileTO.setLastMod(LocalDateTime.now());
     }
 
     @Override
@@ -57,13 +57,13 @@ public class ServerFileHandler extends ChunkedWriteHandler {
                 fileChannel.close();
             }
 
-            if (Files.size(filePath) == fileInfoTo.getSize()) {
+            if (Files.size(filePath) == fileTO.getSize()) {
                 ctx.pipeline().remove(this);
             }
 
         } catch (Exception e) {
             log.warn("Filehandler exception {}", e.getMessage());
-            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SAVING_PROBLEM), fileInfoTo));
+            ctx.writeAndFlush(new ResponseMessage(new FileOperationResponse(FileOperationResponseType.FILE_SAVING_PROBLEM), fileTO));
             Files.delete(filePath);
             channelInactive(ctx);
             ctx.pipeline().remove(this);

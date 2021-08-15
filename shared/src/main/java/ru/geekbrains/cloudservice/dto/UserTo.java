@@ -6,6 +6,6 @@ import ru.geekbrains.cloudservice.commands.AbstractMessage;
 
 @AllArgsConstructor
 @Getter
-public class UserTo extends AbstractMessage {
+public class UserTo implements AbstractMessage {
     private final String username;
 }

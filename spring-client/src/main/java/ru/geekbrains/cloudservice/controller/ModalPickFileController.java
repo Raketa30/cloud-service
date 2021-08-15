@@ -13,6 +13,7 @@ import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.geekbrains.cloudservice.service.ClientFileService;
+import ru.geekbrains.cloudservice.service.ClientFilesOperationService;
 
 import java.io.File;
 
@@ -21,7 +22,8 @@ import java.io.File;
 @FxmlView("modalAddFile.fxml")
 public class ModalPickFileController {
 
-    private final ClientFileService clientFileService;
+    private final ClientFilesOperationService operationService;
+    private final ClientFileService fileService;
     private final FxWeaver fxWeaver;
 
     @FXML
@@ -34,8 +36,9 @@ public class ModalPickFileController {
     private TextField pathTextField;
 
     @Autowired
-    public ModalPickFileController(ClientFileService clientFileService, FxWeaver fxWeaver) {
-        this.clientFileService = clientFileService;
+    public ModalPickFileController(ClientFilesOperationService operationService, ClientFileService fileService, FxWeaver fxWeaver) {
+        this.operationService = operationService;
+        this.fileService = fileService;
         this.fxWeaver = fxWeaver;
     }
 
@@ -72,6 +75,7 @@ public class ModalPickFileController {
     }
 
     public void confirmUserFolderPath(ActionEvent actionEvent) {
+        fileService.addNewFile(pathTextField.getText());
         this.stage.hide();
     }
 }

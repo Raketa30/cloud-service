@@ -1,4 +1,4 @@
-package ru.geekbrains.cloudservice.commands.auth;
+package ru.geekbrains.cloudservice.commands.impl.auth;
 
 import ru.geekbrains.cloudservice.commands.CommandType;
 

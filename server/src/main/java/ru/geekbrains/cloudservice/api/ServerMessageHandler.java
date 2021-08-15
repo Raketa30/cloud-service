@@ -6,11 +6,12 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import ru.geekbrains.cloudservice.commands.Message;
 import ru.geekbrains.cloudservice.commands.Request;
-import ru.geekbrains.cloudservice.commands.RequestMessage;
-import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.auth.AuthRequest;
-import ru.geekbrains.cloudservice.commands.files.FileOperationRequest;
-import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.commands.impl.RequestMessage;
+import ru.geekbrains.cloudservice.commands.impl.ResponseMessage;
+import ru.geekbrains.cloudservice.commands.impl.auth.AuthRequest;
+import ru.geekbrains.cloudservice.commands.impl.files.FileOperationRequest;
+import ru.geekbrains.cloudservice.dto.FileTO;
+import ru.geekbrains.cloudservice.model.User;
 import ru.geekbrains.cloudservice.service.ServerAuthService;
 
 import java.nio.file.Path;
@@ -20,14 +21,15 @@ import java.nio.file.Path;
 public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
     private final ServerAuthHandler serverAuthHandler;
     private final ServerFilesOperationHandler serverFilesOperationHandler;
+
     @Getter
     private ChannelHandlerContext channelHandlerContext;
     @Getter
     @Setter
     private boolean isReady;
 
-    public ServerMessageHandler(ServerAuthService serverAuthService) {
-        serverAuthHandler = new ServerAuthHandler(serverAuthService, this);
+    public ServerMessageHandler(ServerAuthService authService) {
+        serverAuthHandler = new ServerAuthHandler(this, authService);
         serverFilesOperationHandler = new ServerFilesOperationHandler(this);
     }
 
@@ -81,10 +83,10 @@ public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
         Request request = requestMessage.getRequest();
 
         if (request instanceof AuthRequest) {
-            serverAuthHandler.processRequest(requestMessage, ctx);
+            serverAuthHandler.processRequest(requestMessage);
         }
         if (request instanceof FileOperationRequest) {
-            serverFilesOperationHandler.processRequest(requestMessage, serverAuthHandler.getActiveUser());
+            serverFilesOperationHandler.processRequest(requestMessage);
         }
     }
 
@@ -94,8 +96,8 @@ public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
         cause.printStackTrace();
     }
 
-    public void createFileHandler(Path fullPath, FileInfoTo fileInfoTo) {
-        ServerFileHandler serverFileHandler = new ServerFileHandler(fullPath, fileInfoTo);
+    public void createFileHandler(Path fullPath, FileTO fileTO) {
+        ServerFileHandler serverFileHandler = new ServerFileHandler(fullPath, fileTO);
         ChannelPipeline pipeline = channelHandlerContext.pipeline()
                 .addBefore("od", "fh", serverFileHandler);
         log.info(pipeline.toString());
@@ -113,5 +115,9 @@ public class ServerMessageHandler extends SimpleChannelInboundHandler<Message> {
         isReady = false;
         ChannelFuture sendFileFuture = channelHandlerContext.writeAndFlush(defaultFileRegion, channelHandlerContext.newProgressivePromise());
         addListener(sendFileFuture);
+    }
+
+    public void setUser(User user) {
+        serverFilesOperationHandler.setServerFileService(user);
     }
 }

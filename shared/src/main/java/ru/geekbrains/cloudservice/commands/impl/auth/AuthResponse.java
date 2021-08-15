@@ -1,12 +1,12 @@
-package ru.geekbrains.cloudservice.commands.files;
+package ru.geekbrains.cloudservice.commands.impl.auth;
 
 import ru.geekbrains.cloudservice.commands.CommandType;
 import ru.geekbrains.cloudservice.commands.Response;
 
-public class FileOperationResponse implements Response {
+public class AuthResponse implements Response {
     private final CommandType commandType;
 
-    public FileOperationResponse(CommandType commandType) {
+    public AuthResponse(CommandType commandType) {
         this.commandType = commandType;
     }
 

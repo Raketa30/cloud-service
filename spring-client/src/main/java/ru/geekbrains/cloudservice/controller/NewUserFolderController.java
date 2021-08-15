@@ -45,8 +45,8 @@ public class NewUserFolderController {
 
     @FXML
     void closeModalWindow(ActionEvent event) {
-        fxWeaver.loadController(AuthController.class).show();
         stage.getScene().getWindow().hide();
+        fxWeaver.loadController(AuthController.class).show();
     }
 
     @FXML

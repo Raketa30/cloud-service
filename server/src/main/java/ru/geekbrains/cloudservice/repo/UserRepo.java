@@ -5,7 +5,6 @@ import ru.geekbrains.cloudservice.model.User;
 
 import java.util.Optional;
 
-
 public class UserRepo {
     private final UserDBConnection userDbConnection;
 

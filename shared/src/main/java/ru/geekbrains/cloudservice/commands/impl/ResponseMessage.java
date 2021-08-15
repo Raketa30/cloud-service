@@ -1,6 +1,10 @@
-package ru.geekbrains.cloudservice.commands;
+package ru.geekbrains.cloudservice.commands.impl;
 
-public class ResponseMessage extends Message {
+import ru.geekbrains.cloudservice.commands.AbstractMessage;
+import ru.geekbrains.cloudservice.commands.Message;
+import ru.geekbrains.cloudservice.commands.Response;
+
+public class ResponseMessage implements Message {
     private final Response response;
     private AbstractMessage abstractMessage;
 

@@ -1,8 +1,12 @@
-package ru.geekbrains.cloudservice.commands;
+package ru.geekbrains.cloudservice.commands.impl;
 
-public class RequestMessage extends Message {
+import ru.geekbrains.cloudservice.commands.AbstractMessage;
+import ru.geekbrains.cloudservice.commands.Message;
+import ru.geekbrains.cloudservice.commands.Request;
+
+public class RequestMessage implements Message {
     private final Request request;
-    private  AbstractMessage abstractMessage;
+    private AbstractMessage abstractMessage;
 
     public RequestMessage(Request request, AbstractMessage abstractMessage) {
         this.request = request;

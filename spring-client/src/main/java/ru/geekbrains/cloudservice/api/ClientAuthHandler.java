@@ -3,8 +3,8 @@ package ru.geekbrains.cloudservice.api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.auth.AuthResponseType;
+import ru.geekbrains.cloudservice.commands.impl.ResponseMessage;
+import ru.geekbrains.cloudservice.commands.impl.auth.AuthResponseType;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
 
 @Component

@@ -4,9 +4,9 @@ import javafx.collections.ObservableList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.commands.FilesListMessage;
-import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.dto.FileInfoTo;
+import ru.geekbrains.cloudservice.commands.impl.ResponseMessage;
+import ru.geekbrains.cloudservice.commands.impl.files.FilesListMessage;
+import ru.geekbrains.cloudservice.dto.FileTO;
 import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
 import ru.geekbrains.cloudservice.model.UploadedStatus;
@@ -33,7 +33,6 @@ public class ClientFilesOperationService {
         this.dataModel = dataModel;
     }
 
-    //получаем список локальных файлов
     public void getLocalFileList(FileInfo fileInfo) {
         Path path = fileInfo.getPath();
         try {
@@ -56,14 +55,13 @@ public class ClientFilesOperationService {
         }
     }
 
-    //получаем список файлов с сервера и объеденяем с локальным
     public void updateFileListInfo(FilesListMessage listFromServer) {
         try {
-            List<FileInfoTo> list = listFromServer.getFileInfoTos();
+            List<FileTO> list = listFromServer.getFileTOS();
             List<FileInfo> serverList = new ArrayList<>();
             if (!list.isEmpty()) {
-                for (FileInfoTo f : list) {
-                    FileInfo local = new FileInfo(Paths.get(f.getFilePath()), f.getFileName(), f.getFileType(), f.getSize(), f.getLocalDateTime());
+                for (FileTO f : list) {
+                    FileInfo local = new FileInfo(Paths.get(f.getRelativePath()), f.getFilename(), f.getType(), f.getSize(), f.getLastMod());
                     local.setUploadedStatus(UploadedStatus.AIR);
                     serverList.add(local);
                 }
@@ -92,9 +90,9 @@ public class ClientFilesOperationService {
 
     public void addFileListFromServer(ResponseMessage responseMessage) {
         FilesListMessage listInfo = (FilesListMessage) responseMessage.getAbstractMessageObject();
-        dataModel.setRelativePath(listInfo.getRelativePath());
+        dataModel.setRelativePath(listInfo.getParent());
         dataModel.getFileInfos().clear();
-        Path local = Paths.get(dataModel.getRootPath()).resolve(listInfo.getRelativePath());
+        Path local = Paths.get(dataModel.getRootPath()).resolve(listInfo.getParent());
         if (Files.exists(local)) {
             getLocalFileList(new FileInfo(local));
         }
@@ -166,10 +164,22 @@ public class ClientFilesOperationService {
                     result = scanner.nextLine();
                 }
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                log.warn("user folder not found");
             }
         }
 
         return result;
+    }
+
+    public boolean addNewFile(String path) {
+        try {
+            Path from = Paths.get(path);
+            Path to = Paths.get(dataModel.getRootPath()).resolve(dataModel.getRelativePath()).resolve(from.getFileName());
+            Files.copy(from, to);
+            return true;
+        } catch (IOException e) {
+            log.warn("add new file exception {}", e.getMessage());
+        }
+        return false;
     }
 }

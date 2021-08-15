@@ -39,7 +39,7 @@ public class MainController {
     @FXML
     public TextField pathField;
     //Сервисы
-    private final ClientFileService clientFileService;
+    private final ClientFileService fileService;
     private final DataModel dataModel;
 
     @FXML
@@ -75,9 +75,9 @@ public class MainController {
     private String currentRelativePath;
 
     @Autowired
-    public MainController(FxWeaver fxWeaver, ClientFileService clientFileService, DataModel dataModel) {
+    public MainController(FxWeaver fxWeaver, ClientFileService fileService, DataModel dataModel) {
         this.fxWeaver = fxWeaver;
-        this.clientFileService = clientFileService;
+        this.fileService = fileService;
         this.dataModel = dataModel;
     }
 
@@ -94,9 +94,9 @@ public class MainController {
             pathField.setText("/" + newValue);
         });
 
-        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFileType()));
+        fileTypeColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getType()));
         fileNameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
-        fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getFileSize()));
+        fileSizeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getSize()));
         fileSizeColumn.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(Long item, boolean empty) {
@@ -133,7 +133,7 @@ public class MainController {
         filesList.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
                 FileInfo fileInfo = getSelectedFileInfo();
-                if (fileInfo.getFileType().equals("folder")) {
+                if (fileInfo.getType().equals("folder")) {
                     updateFilesList(fileInfo);
                 }
             }
@@ -143,7 +143,7 @@ public class MainController {
     }
 
     private void updateFilesList(FileInfo fileInfo) {
-        clientFileService.updateFileList(fileInfo);
+        fileService.updateFileList(fileInfo);
         setAirStatus();
         setDeleteButtons();
         setDownloadUploadButton();
@@ -191,8 +191,7 @@ public class MainController {
 
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                            clientFileService.sendRequestForFileDownloading(fileInfo);
-                            updateFilesList(fileInfo);
+                            fileService.sendRequestForFileDownloading(fileInfo);
                         });
                     }
 
@@ -207,8 +206,7 @@ public class MainController {
 
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                            clientFileService.sendFileToServer(fileInfo);
-                            updateFilesList(fileInfo);
+                            fileService.sendFileToServer(fileInfo);
                         });
                     }
                 }
@@ -233,7 +231,7 @@ public class MainController {
 
                         button.setOnMouseClicked(event -> {
                             FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                            clientFileService.sendRequestForDeleting(fileInfo);
+                            fileService.sendRequestForDeleting(fileInfo);
                         });
                     }
                 }
@@ -249,7 +247,7 @@ public class MainController {
         if (currentRelativePath.equals("")) {
             return;
         }
-        clientFileService.sendFolderUpRequest(currentRelativePath);
+        fileService.sendFolderUpRequest(currentRelativePath);
     }
 
     public FileInfo getSelectedFileInfo() {
@@ -267,7 +265,7 @@ public class MainController {
 
     //удалить локально
     public void deleteFile(ActionEvent actionEvent) {
-        clientFileService.deleteFile(getSelectedFileInfo(), currentRelativePath);
+        fileService.deleteFile(getSelectedFileInfo(), currentRelativePath);
     }
 
     public void addNewFolder(ActionEvent actionEvent) {

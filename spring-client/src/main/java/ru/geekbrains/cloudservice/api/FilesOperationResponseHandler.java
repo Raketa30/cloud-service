@@ -3,8 +3,8 @@ package ru.geekbrains.cloudservice.api;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.geekbrains.cloudservice.commands.ResponseMessage;
-import ru.geekbrains.cloudservice.commands.files.FileOperationResponseType;
+import ru.geekbrains.cloudservice.commands.impl.ResponseMessage;
+import ru.geekbrains.cloudservice.commands.impl.files.FileOperationResponseType;
 import ru.geekbrains.cloudservice.service.ClientFileService;
 import ru.geekbrains.cloudservice.service.ClientFilesOperationService;
 

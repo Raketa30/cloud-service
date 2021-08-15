@@ -7,6 +7,7 @@ import lombok.ToString;
 import ru.geekbrains.cloudservice.commands.AbstractMessage;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @NoArgsConstructor
 @Getter
@@ -14,7 +15,7 @@ import javax.persistence.*;
 @ToString
 @Entity
 @Table(name = "users")
-public class User extends AbstractMessage {
+public class User implements AbstractMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,5 +36,20 @@ public class User extends AbstractMessage {
     public User(String username, String password) {
         this.username = username;
         this.password = password;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User user = (User) o;
+        return username.equals(user.username) &&
+                password.equals(user.password) &&
+                serverRootPath.equals(user.serverRootPath);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, password, serverRootPath);
     }
 }

@@ -60,17 +60,17 @@ public class ClientAuthService {
     public void confirmRegistration(ResponseMessage message) {
         UserTo userTo = (UserTo) message.getAbstractMessageObject();
         log.info("Registered new user: {}", userTo.getUsername());
+        dataModel.setRegisteredUser(userTo);
     }
 
     public void declineRegistration() {
-
+        dataModel.setRegisteredUser(new UserTo("*empty"));
     }
 
     public void declineLoginRequest() {
-        dataModel.setUser(new UserTo("empty"));
+        dataModel.setUser(new UserTo("*empty"));
         log.info("login wrong response");
     }
-
 
     //ищем папку пользователя в файле настроек
     public Optional<String> findUserFolderPath(UserTo user) {

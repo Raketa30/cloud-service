@@ -13,7 +13,6 @@ import ru.geekbrains.cloudservice.commands.files.FileOperationRequestType;
 import ru.geekbrains.cloudservice.dto.FileInfoTo;
 import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.model.FileInfo;
-import ru.geekbrains.cloudservice.model.UploadedStatus;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -52,6 +51,7 @@ public class ClientFileService {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+//                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(relative)));
             } else {
                 messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.SAVE_FILE), fileInfo));
                 sendFileToServer(filePath, fileInfo);
@@ -129,13 +129,17 @@ public class ClientFileService {
         }
     }
 
-    public void deleteLocalFile(FileInfo fileInfo) {
-        Path root = Paths.get(dataModel.getRootPath());
-        Path currentPath = root.resolve(fileInfo.getRelativePath());
-        try {
-            Files.deleteIfExists(currentPath);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void deleteFile(FileInfo fileInfo, String relative) {
+        switch (fileInfo.getUploadedStatus()) {
+            case UPLOADED:
+            case AIR:
+                FileInfoTo file = new FileInfoTo();
+                file.setFilePath(fileInfo.getRelativePath().toString());
+                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.DELETE_FILE), file));
+                messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(relative)));
+                break;
+            case NOT_UPLOADED:
+                break;
         }
     }
 
@@ -144,18 +148,21 @@ public class ClientFileService {
             if (operationService.getRelativePath().equals("/")) {
                 messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage("")));
             } else {
-                if (fileInfo.getUploadedStatus() == UploadedStatus.NOT_UPLOADED) {
-                    operationService.getLocalFileList(fileInfo);
-                } else {
-                    String relative = Paths.get(dataModel.getRootPath()).relativize(fileInfo.getPath()).toString();
-                    messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(relative)));
+                switch (fileInfo.getUploadedStatus()) {
+                    case AIR:
+                        String relative = fileInfo.getRelativePath().toString();
+                        messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FILES_LIST), new FilesListMessage(relative)));
+                        break;
+                    case UPLOADED:
+                    case NOT_UPLOADED:
+                        operationService.getLocalFileList(fileInfo);
+                        break;
                 }
             }
         }
     }
 
     public void sendFolderUpRequest(String relative) {
-        operationService.getLocalPath()
         messageHandler.sendRequestToServer(new RequestMessage(new FileOperationRequest(FileOperationRequestType.FOLDER_UP), new FilesListMessage(relative)));
     }
 

@@ -1,6 +1,7 @@
 package ru.geekbrains.cloudservice.controller;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -72,7 +73,7 @@ public class AuthController {
             clientAuthService.userLogin(username, password);
             SimpleObjectProperty<UserTo> userProperty = dataModel.userProperty();
             userProperty.addListener((observable, oldValue, newValue) -> {
-                if (!newValue.getUsername().equals("empty")) {
+                if (!newValue.getUsername().equals("*empty")) {
                     loginOk();
                 } else {
                     wrongLogin.setVisible(true);
@@ -96,9 +97,12 @@ public class AuthController {
     public void loginOk() {
         String path = dataModel.getRootPath();
         if (path.equals("empty")) {
-            fxWeaver.loadController(NewFolderController.class).show();
+            fxWeaver.loadController(NewUserFolderController.class).show();
         } else {
-            fxWeaver.loadController(MainController.class).show();
+            Platform.runLater(() -> {
+                loginButton.getScene().getWindow().hide();
+                fxWeaver.loadController(MainController.class).show();
+            });
         }
     }
 

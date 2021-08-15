@@ -1,6 +1,8 @@
 package ru.geekbrains.cloudservice.controller;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -15,6 +17,7 @@ import net.rgielen.fxweaver.core.FxWeaver;
 import net.rgielen.fxweaver.core.FxmlView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.geekbrains.cloudservice.dto.UserTo;
 import ru.geekbrains.cloudservice.model.DataModel;
 import ru.geekbrains.cloudservice.service.ClientAuthService;
 
@@ -31,6 +34,9 @@ public class RegistrationController {
     private final FxWeaver fxWeaver;
     @FXML
     public Label regWrong;
+
+    @FXML
+    private JFXButton backButton;
 
     @FXML
     private AnchorPane mainDialog;
@@ -91,6 +97,16 @@ public class RegistrationController {
 
         if (validateCredentials(username, password, passwordRepeat)) {
             clientAuthService.registerUser(username, password);
+            SimpleObjectProperty<UserTo> userProperty = dataModel.registeredUserProperty();
+            userProperty.addListener((observable, oldValue, newValue) -> {
+                if (!newValue.getUsername().equals("*empty")) {
+                    clientAuthService.createLocalUserDirectory(folderPath.getText(), username);
+                    dataModel.setRegisteredUser(new UserTo("*empty"));
+                    registerOk();
+                } else {
+                    regWrong.setVisible(true);
+                }
+            });
         }
     }
 
@@ -112,16 +128,20 @@ public class RegistrationController {
                 && password.equals(passwordRepeat);
     }
 
+    private void registerOk() {
+        Platform.runLater(() -> {
+            confirmRegButton.getScene().getWindow().hide();
+            fxWeaver.loadController(AuthController.class).show();
+        });
+    }
+
     public void show() {
         stage.show();
     }
 
-    public void backToPreviosStage(ActionEvent actionEvent) {
+    public void backToPreviousStage(ActionEvent actionEvent) {
+        backButton.getScene().getWindow().hide();
         fxWeaver.loadController(AuthController.class).show();
-    }
-
-    public void registrationWrong() {
-        regWrong.setVisible(true);
     }
 }
 

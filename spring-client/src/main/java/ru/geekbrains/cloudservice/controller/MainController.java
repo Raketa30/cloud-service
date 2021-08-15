@@ -1,7 +1,6 @@
 package ru.geekbrains.cloudservice.controller;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ListChangeListener;
@@ -62,7 +61,7 @@ public class MainController {
     private TableColumn<FileInfo, String> fileTypeColumn;
 
     @FXML
-    public TableColumn<FileInfo, String> deleteColumn;
+    public TableColumn<FileInfo, UploadedStatus> deleteColumn;
 
     @FXML
     private TableColumn<FileInfo, UploadedStatus> onAirColumn;
@@ -91,8 +90,6 @@ public class MainController {
         currentRelativePath = relative.getValue();
         pathField.setText(relative.getValue());
         relative.addListener((observable, oldValue, newValue) -> {
-            System.out.println(oldValue);
-            System.out.println(newValue);
             currentRelativePath = newValue;
             pathField.setText("/" + newValue);
         });
@@ -116,14 +113,10 @@ public class MainController {
                 }
             }
         });
-        //показываем статус загруженного файл
-        //https://stackoverflow.com/questions/42662807/javafx-tablecolumn-cell-change - спасибо ребятам
+
         onAirColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
-        //кнопки отправки/загрузки файла/папки в строке
         upDownColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
-
-        deleteColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getFilename()));
-
+        deleteColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getUploadedStatus()));
         fileLastModifiedColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()
                 .getLastModified()
                 .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
@@ -133,6 +126,7 @@ public class MainController {
         fileListObserver.addListener((ListChangeListener<FileInfo>) c -> {
             filesList.getItems().clear();
             filesList.getItems().addAll(c.getList());
+            updateRows();
             filesList.sort();
         });
 
@@ -155,10 +149,14 @@ public class MainController {
         setDownloadUploadButton();
     }
 
+    private void updateRows() {
+        setAirStatus();
+        setDeleteButtons();
+        setDownloadUploadButton();
+    }
+
     private void setAirStatus() {
         onAirColumn.setCellFactory(column -> new TableCell<>() {
-
-
             @Override
             protected void updateItem(UploadedStatus item, boolean empty) {
                 super.updateItem(item, empty);
@@ -225,21 +223,23 @@ public class MainController {
     private void setDeleteButtons() {
         deleteColumn.setCellFactory(column -> new TableCell<>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(UploadedStatus item, boolean empty) {
                 super.updateItem(item, empty);
                 if (isSafe(item, empty)) {
-                    JFXButton button = new JFXButton();
-                    button.setText("x");
-                    setGraphic(button);
+                    if (item == UploadedStatus.AIR || item == UploadedStatus.UPLOADED) {
+                        JFXButton button = new JFXButton();
+                        button.setText("x");
+                        setGraphic(button);
 
-                    button.setOnMouseClicked(event -> {
-                        FileInfo fileInfo = getTableView().getItems().get(getIndex());
-                        clientFileService.sendRequestForDeleting(fileInfo);
-                    });
+                        button.setOnMouseClicked(event -> {
+                            FileInfo fileInfo = getTableView().getItems().get(getIndex());
+                            clientFileService.sendRequestForDeleting(fileInfo);
+                        });
+                    }
                 }
             }
 
-            private boolean isSafe(String item, boolean empty) {
+            private boolean isSafe(UploadedStatus item, boolean empty) {
                 return !empty && Objects.nonNull(item);
             }
         });
@@ -257,19 +257,17 @@ public class MainController {
     }
 
     public void show() {
-        Platform.runLater(() -> {
-            this.stage = new Stage();
-            stage.setScene(new Scene(mainDialog));
-            stage.setTitle("cloud");
-            stage.setResizable(false);
-            connectionStatusLamp.setFill(Color.GREEN);
-            stage.show();
-        });
+        this.stage = new Stage();
+        stage.setScene(new Scene(mainDialog));
+        stage.setTitle("cloud");
+        stage.setResizable(false);
+        connectionStatusLamp.setFill(Color.GREEN);
+        stage.show();
     }
 
     //удалить локально
     public void deleteFile(ActionEvent actionEvent) {
-        clientFileService.deleteLocalFile(getSelectedFileInfo());
+        clientFileService.deleteFile(getSelectedFileInfo(), currentRelativePath);
     }
 
     public void addNewFolder(ActionEvent actionEvent) {

@@ -139,10 +139,7 @@ public class ClientFilesOperationService {
     }
 
     private void setLocalRelativePath(Path path) {
-        if (dataModel.getRootPath().equals(path.toString())) {
-            return;
-        }
-        Path relative = Paths.get(dataModel.getRootPath()).relativize(path).getParent();
+        Path relative = Paths.get(dataModel.getRootPath()).relativize(path);
         dataModel.setRelativePath(relative.toString());
     }
 }

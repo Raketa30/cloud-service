@@ -37,8 +37,7 @@ public class FileNameController {
 
     @FXML
     void closeModalWindow(ActionEvent event) {
-        fxWeaver.loadController(MainController.class).show();
-        this.stage.hide();
+        stage.getScene().getWindow().hide();
     }
 
     public void show() {

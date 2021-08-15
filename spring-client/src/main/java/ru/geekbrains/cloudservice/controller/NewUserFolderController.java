@@ -21,7 +21,7 @@ import java.io.File;
 @Slf4j
 @Component
 @FxmlView("modalPickFolder.fxml")
-public class NewFolderController {
+public class NewUserFolderController {
 
     private final FxWeaver fxWeaver;
     private final ClientAuthService clientAuthService;
@@ -37,7 +37,7 @@ public class NewFolderController {
     private TextField pathTextField;
 
     @Autowired
-    public NewFolderController(FxWeaver fxWeaver, ClientAuthService clientAuthService, DataModel dataModel) {
+    public NewUserFolderController(FxWeaver fxWeaver, ClientAuthService clientAuthService, DataModel dataModel) {
         this.fxWeaver = fxWeaver;
         this.clientAuthService = clientAuthService;
         this.dataModel = dataModel;
@@ -46,7 +46,7 @@ public class NewFolderController {
     @FXML
     void closeModalWindow(ActionEvent event) {
         fxWeaver.loadController(AuthController.class).show();
-        this.stage.hide();
+        stage.getScene().getWindow().hide();
     }
 
     @FXML

@@ -16,6 +16,7 @@ import java.util.List;
 public class DataModel {
     private final ObservableList<FileInfo> fileInfos;
     private final SimpleObjectProperty<UserTo> user;
+    private final SimpleObjectProperty<UserTo> registeredUser;
     private final SimpleStringProperty rootPath;
     private final SimpleStringProperty relativePath;
 
@@ -23,7 +24,8 @@ public class DataModel {
     public DataModel() {
         this.fileInfos = FXCollections.observableArrayList(new ArrayList<>());
         this.user = new SimpleObjectProperty<>(new UserTo("empty"));
-        this.rootPath = new SimpleStringProperty("empty");
+        this.registeredUser = new SimpleObjectProperty<>(new UserTo("empty"));
+        this.rootPath = new SimpleStringProperty("*empty");
         this.relativePath = new SimpleStringProperty("/");
 
     }
@@ -71,5 +73,17 @@ public class DataModel {
 
     public void setRelativePath(String relative) {
         this.relativePath.set(relative);
+    }
+
+    public UserTo getRegisteredUser() {
+        return registeredUser.get();
+    }
+
+    public void setRegisteredUser(UserTo registeredUser) {
+        this.registeredUser.set(registeredUser);
+    }
+
+    public SimpleObjectProperty<UserTo> registeredUserProperty() {
+        return registeredUser;
     }
 }

@@ -30,6 +30,3 @@ For further reference, please consider the following sections:
 * [Create an OCI image](https://docs.spring.io/spring-boot/docs/2.5.3/maven-plugin/reference/html/#build-image)
 * [Spring Boot DevTools](https://docs.spring.io/spring-boot/docs/2.5.3/reference/htmlsingle/#using-boot-devtools)
 * [FxWeawer](https://github.com/rgielen/javafx-weaver)
-
-
-[]: screen/pic1.png
